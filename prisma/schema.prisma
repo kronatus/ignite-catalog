@@ -1,0 +1,205 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                 Int       @id @default(autoincrement())
+  sessionId          String    @unique
+  sessionInstanceId  String?
+  localizedId        String?
+  sessionCode        String?
+  langLocale         String?
+  title              String
+  sortTitle          String?
+  description        String?
+  aiDescription      String?
+  location           String?
+  timeSlot           String?
+  startDateTime      DateTime?
+  endDateTime        DateTime?
+  durationInMinutes  Int?
+  sessionTypeDisplay String?
+  sessionTypeLogical String?
+  reportingTopic     String?
+  onDemandUrl        String?
+  downloadVideoUrl   String?
+  captionFileUrl     String?
+  thumbnailUrl       String?
+  registrationLink   String?
+  hasOnDemand        Boolean   @default(false)
+  isPopular          Boolean   @default(false)
+  heroSession        Boolean   @default(false)
+
+  // Relations
+  sessionTopics        SessionTopic[]
+  sessionTags          SessionTag[]
+  sessionLevels        SessionLevelOnSession[]
+  sessionAudienceTypes SessionAudienceTypeOnSession[]
+  sessionIndustries    SessionIndustryOnSession[]
+  sessionDeliveryTypes SessionDeliveryTypeOnSession[]
+  sessionViewingOpts   SessionViewingOptionOnSession[]
+  sessionSpeakers      SessionSpeaker[]
+}
+
+model Topic {
+  id           Int            @id @default(autoincrement())
+  logicalValue String         @unique
+  displayValue String
+  sessions     SessionTopic[]
+}
+
+model SessionTopic {
+  sessionId Int
+  topicId   Int
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  topic   Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, topicId])
+}
+
+model Tag {
+  id           Int          @id @default(autoincrement())
+  logicalValue String       @unique
+  displayValue String
+  sessions     SessionTag[]
+}
+
+model SessionTag {
+  sessionId Int
+  tagId     Int
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, tagId])
+}
+
+model Level {
+  id           Int                     @id @default(autoincrement())
+  logicalValue String                  @unique
+  displayValue String
+  sessions     SessionLevelOnSession[]
+}
+
+model SessionLevelOnSession {
+  sessionId Int
+  levelId   Int
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  level   Level   @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, levelId])
+}
+
+model AudienceType {
+  id           Int                         @id @default(autoincrement())
+  logicalValue String                      @unique
+  displayValue String
+  sessions     SessionAudienceTypeOnSession[]
+}
+
+model SessionAudienceTypeOnSession {
+  sessionId     Int
+  audienceTypeId Int
+
+  session      Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  audienceType AudienceType @relation(fields: [audienceTypeId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, audienceTypeId])
+}
+
+model Industry {
+  id           Int                        @id @default(autoincrement())
+  logicalValue String                     @unique
+  displayValue String
+  sessions     SessionIndustryOnSession[]
+}
+
+model SessionIndustryOnSession {
+  sessionId  Int
+  industryId Int
+
+  session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  industry Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, industryId])
+}
+
+model DeliveryType {
+  id           Int                          @id @default(autoincrement())
+  logicalValue String                       @unique
+  displayValue String
+  sessions     SessionDeliveryTypeOnSession[]
+}
+
+model SessionDeliveryTypeOnSession {
+  sessionId      Int
+  deliveryTypeId Int
+
+  session      Session      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  deliveryType DeliveryType @relation(fields: [deliveryTypeId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, deliveryTypeId])
+}
+
+model ViewingOption {
+  id           Int                           @id @default(autoincrement())
+  logicalValue String                        @unique
+  displayValue String
+  sessions     SessionViewingOptionOnSession[]
+}
+
+model SessionViewingOptionOnSession {
+  sessionId        Int
+  viewingOptionId  Int
+
+  session       Session       @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  viewingOption ViewingOption @relation(fields: [viewingOptionId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, viewingOptionId])
+}
+
+model Speaker {
+  id            Int              @id @default(autoincrement())
+  speakerId     String           @unique
+  name          String
+  company       String?
+  sessionSpeakers SessionSpeaker[]
+  speakerCompanies SpeakerCompany[]
+}
+
+model Company {
+  id                Int              @id @default(autoincrement())
+  name              String           @unique
+  speakerCompanies  SpeakerCompany[]
+}
+
+model SpeakerCompany {
+  speakerId Int
+  companyId Int
+
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([speakerId, companyId])
+}
+
+model SessionSpeaker {
+  sessionId Int
+  speakerId Int
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+
+  @@id([sessionId, speakerId])
+}
