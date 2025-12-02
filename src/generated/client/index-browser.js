@@ -224,6 +224,36 @@ exports.Prisma.SessionViewingOptionOnSessionScalarFieldEnum = {
   viewingOptionId: 'viewingOptionId'
 };
 
+exports.Prisma.SpeakerScalarFieldEnum = {
+  id: 'id',
+  speakerId: 'speakerId',
+  name: 'name',
+  company: 'company'
+};
+
+exports.Prisma.CompanyScalarFieldEnum = {
+  id: 'id',
+  name: 'name'
+};
+
+exports.Prisma.SpeakerCompanyScalarFieldEnum = {
+  speakerId: 'speakerId',
+  companyId: 'companyId'
+};
+
+exports.Prisma.SessionSpeakerScalarFieldEnum = {
+  sessionId: 'sessionId',
+  speakerId: 'speakerId'
+};
+
+exports.Prisma.VoteScalarFieldEnum = {
+  id: 'id',
+  sessionId: 'sessionId',
+  value: 'value',
+  userIdentifier: 'userIdentifier',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -250,7 +280,12 @@ exports.Prisma.ModelName = {
   DeliveryType: 'DeliveryType',
   SessionDeliveryTypeOnSession: 'SessionDeliveryTypeOnSession',
   ViewingOption: 'ViewingOption',
-  SessionViewingOptionOnSession: 'SessionViewingOptionOnSession'
+  SessionViewingOptionOnSession: 'SessionViewingOptionOnSession',
+  Speaker: 'Speaker',
+  Company: 'Company',
+  SpeakerCompany: 'SpeakerCompany',
+  SessionSpeaker: 'SessionSpeaker',
+  Vote: 'Vote'
 };
 
 /**

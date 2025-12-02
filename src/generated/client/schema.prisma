@@ -48,6 +48,7 @@ model Session {
   sessionDeliveryTypes SessionDeliveryTypeOnSession[]
   sessionViewingOpts   SessionViewingOptionOnSession[]
   sessionSpeakers      SessionSpeaker[]
+  votes                Vote[]
 }
 
 model Topic {
@@ -202,4 +203,17 @@ model SessionSpeaker {
   speaker Speaker @relation(fields: [speakerId], references: [id], onDelete: Cascade)
 
   @@id([sessionId, speakerId])
+}
+
+model Vote {
+  id             Int      @id @default(autoincrement())
+  sessionId      Int
+  value          Int // 1 for upvote, -1 for downvote
+  userIdentifier String // Unique identifier for the user (browser-based)
+  createdAt      DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userIdentifier])
+  @@index([sessionId])
 }

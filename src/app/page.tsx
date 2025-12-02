@@ -33,6 +33,11 @@ type Session = {
       speakerCompanies: Array<{ company: { name: string } }>;
     };
   }>;
+  voteCounts?: {
+    upvotes: number;
+    downvotes: number;
+    netVotes: number;
+  };
 };
 
 type Facets = {
@@ -46,11 +51,24 @@ type Facets = {
   nonRecordedCount: number;
 };
 
+// Generate or retrieve user identifier from localStorage
+const getUserIdentifier = (): string => {
+  if (typeof window === "undefined") return "";
+  let userId = localStorage.getItem("voteUserId");
+  if (!userId) {
+    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem("voteUserId", userId);
+  }
+  return userId;
+};
+
 export default function Home() {
   const [search, setSearch] = useState("");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [facets, setFacets] = useState<Facets | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userVotes, setUserVotes] = useState<Record<number, 1 | -1 | null>>({});
   const [filters, setFilters] = useState({
     hasOnDemand: "",
     topic: "",
@@ -59,6 +77,7 @@ export default function Home() {
     audienceType: "",
     industry: "",
     deliveryType: "",
+    voteFilter: "",
   });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -93,15 +112,41 @@ export default function Home() {
       if (filters.audienceType) params.set("audienceType", filters.audienceType);
       if (filters.industry) params.set("industry", filters.industry);
       if (filters.deliveryType) params.set("deliveryType", filters.deliveryType);
+      if (filters.voteFilter) params.set("voteFilter", filters.voteFilter);
       params.set("page", page.toString());
       params.set("limit", "20");
 
       const res = await fetch(`/api/sessions?${params}`);
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        console.error("Failed to fetch sessions", res.status, errorData);
+        setError(errorData.message || `Failed to fetch sessions (${res.status})`);
+        setSessions([]);
+        setTotalPages(1);
+        return;
+      }
       const data = await res.json();
-      setSessions(data.sessions || []);
+      const sessionsData = data.sessions || [];
+      setSessions(sessionsData);
       setTotalPages(data.pagination?.totalPages || 1);
+      setError(null);
+      
+      // Initialize user votes from localStorage for displayed sessions
+      if (typeof window !== "undefined" && sessionsData.length > 0) {
+        const votes: Record<number, 1 | -1 | null> = {};
+        sessionsData.forEach((session: Session) => {
+          const storedVote = localStorage.getItem(`vote_${session.id}`);
+          if (storedVote === "1" || storedVote === "-1") {
+            votes[session.id] = parseInt(storedVote) as 1 | -1;
+          }
+        });
+        setUserVotes((prev) => ({ ...prev, ...votes }));
+      }
     } catch (err) {
       console.error("Failed to fetch sessions", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch sessions");
+      setSessions([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -121,19 +166,89 @@ export default function Home() {
       audienceType: "",
       industry: "",
       deliveryType: "",
+      voteFilter: "",
     });
     setSearch("");
     setPage(1);
   };
 
+  const handleVote = async (sessionId: number, value: 1 | -1) => {
+    const userId = getUserIdentifier();
+    if (!userId) {
+      console.error("Failed to get user identifier");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/vote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId, value, userIdentifier: userId }),
+      });
+
+      if (!res.ok) {
+        let errorData: any = {};
+        try {
+          const text = await res.text();
+          errorData = text ? JSON.parse(text) : {};
+        } catch (parseErr) {
+          console.error("Failed to parse error response:", parseErr);
+          errorData = { error: "Failed to parse error response" };
+        }
+        console.error("Failed to vote:", res.status, errorData);
+        alert(`Failed to vote (${res.status}): ${errorData.message || errorData.error || "Unknown error"}`);
+        return;
+      }
+
+      const data = await res.json();
+      
+      // Update user's vote state
+      const newUserVote = data.userVote as 1 | -1 | null;
+      setUserVotes((prev) => ({
+        ...prev,
+        [sessionId]: newUserVote,
+      }));
+      
+      // Store in localStorage
+      if (newUserVote) {
+        localStorage.setItem(`vote_${sessionId}`, newUserVote.toString());
+      } else {
+        localStorage.removeItem(`vote_${sessionId}`);
+      }
+      
+      // Update the session's vote counts in the local state
+      setSessions((prevSessions) =>
+        prevSessions.map((session) =>
+          session.id === sessionId
+            ? {
+                ...session,
+                voteCounts: data.voteCounts,
+              }
+            : session
+        )
+      );
+    } catch (err) {
+      console.error("Error voting:", err);
+    }
+  };
+
   return (
-    <div className="min-h-screen ms-background-pattern">
+    <div 
+      className="min-h-screen ms-background-pattern"
+      style={{
+        backgroundColor: "#F3F2F1",
+        minHeight: "100vh"
+      }}
+    >
       {/* Header with Microsoft Gradient */}
       <header 
         className="sticky top-0 z-10 ms-elevation-8"
         style={{
           background: "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)",
-          borderBottom: "none"
+          borderBottom: "none",
+          padding: "24px 0"
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -146,7 +261,7 @@ export default function Home() {
               Microsoft Ignite Sessions Explorer
             </h1>
           </div>
-          <p className="text-sm text-white text-opacity-90 mt-1 ml-11">
+          <p className="text-sm mt-1 ml-11" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
             {facets && (
               <>
                 {facets.recordedCount} recorded sessions • {facets.nonRecordedCount} non-recorded
@@ -257,6 +372,19 @@ export default function Home() {
             </>
           )}
 
+          <select
+            value={filters.voteFilter}
+            onChange={(e) => handleFilterChange("voteFilter", e.target.value)}
+            aria-label="Filter by votes"
+            className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
+            style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
+          >
+            <option value="">All Votes</option>
+            <option value="high">High Votes</option>
+            <option value="low">Low Votes</option>
+            <option value="none">No Votes</option>
+          </select>
+
           <button
             onClick={clearFilters}
             className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md hover:bg-[#F3F2F1] ms-transition text-[#323130] font-medium"
@@ -276,9 +404,22 @@ export default function Home() {
             ></div>
             <p className="mt-4" style={{ color: "#605E5C" }}>Loading sessions...</p>
           </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p style={{ color: "#D13438" }} className="font-semibold mb-2">Error loading sessions</p>
+            <p style={{ color: "#605E5C" }}>{error}</p>
+            {error.includes("DATABASE_URL") || error.includes("Prisma") ? (
+              <p style={{ color: "#605E5C" }} className="mt-2 text-sm">
+                Please check your database configuration.
+              </p>
+            ) : null}
+          </div>
         ) : sessions.length === 0 ? (
           <div className="text-center py-12">
-            <p style={{ color: "#605E5C" }}>No sessions found. Try adjusting your filters.</p>
+            <p style={{ color: "#605E5C" }}>No sessions found.</p>
+            <p style={{ color: "#605E5C" }} className="mt-2 text-sm">
+              The database appears to be empty. You may need to run the ingest process to populate sessions.
+            </p>
           </div>
         ) : (
           <>
@@ -286,7 +427,7 @@ export default function Home() {
               {sessions.map((session) => (
                 <div
                   key={session.id}
-                  className="bg-white rounded-md p-6 ms-elevation-4 hover:ms-elevation-8 ms-transition cursor-pointer"
+                  className="bg-white rounded-md p-6 ms-elevation-4 ms-transition cursor-pointer"
                   style={{
                     borderLeft: `4px solid ${session.hasOnDemand ? "#107C10" : "#C8C6C4"}`,
                   }}
@@ -433,27 +574,97 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    {session.hasOnDemand && session.onDemandUrl && (
-                      <div className="ml-4 flex-shrink-0">
+                    <div className="ml-4 flex-shrink-0 flex flex-col items-end gap-3">
+                      {session.hasOnDemand && session.onDemandUrl && (
                         <a
                           href={session.onDemandUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-6 py-2.5 text-white rounded-md font-semibold ms-transition inline-block ms-elevation-4 hover:ms-elevation-8"
+                          className="px-6 py-2.5 text-white rounded-md font-semibold ms-transition inline-block ms-elevation-4"
                           style={{
                             background: "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)",
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = "linear-gradient(135deg, #106EBE 0%, #0078D4 100%)";
+                            e.currentTarget.style.boxShadow = "var(--ms-shadow-8)";
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)";
+                            e.currentTarget.style.boxShadow = "var(--ms-shadow-4)";
                           }}
                         >
                           Watch
                         </a>
+                      )}
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleVote(session.id, 1)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md ms-transition ${
+                            userVotes[session.id] === 1
+                              ? "border-2"
+                              : "border border-[#C8C6C4]"
+                          }`}
+                          style={{
+                            boxShadow: userVotes[session.id] === 1 ? "var(--ms-shadow-4)" : "var(--ms-shadow-2)",
+                            backgroundColor: userVotes[session.id] === 1 ? "#E8F5E9" : "white",
+                            borderColor: userVotes[session.id] === 1 ? "#107C10" : "#C8C6C4",
+                          }}
+                          aria-label="Upvote"
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M10 5L15 10H11V15H9V10H5L10 5Z"
+                              fill="#107C10"
+                            />
+                          </svg>
+                          <span
+                            className="text-sm font-semibold"
+                            style={{ color: "#107C10" }}
+                          >
+                            {session.voteCounts?.upvotes || 0}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => handleVote(session.id, -1)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-md ms-transition ${
+                            userVotes[session.id] === -1
+                              ? "border-2"
+                              : "border border-[#C8C6C4]"
+                          }`}
+                          style={{
+                            boxShadow: userVotes[session.id] === -1 ? "var(--ms-shadow-4)" : "var(--ms-shadow-2)",
+                            backgroundColor: userVotes[session.id] === -1 ? "#FEF6F6" : "white",
+                            borderColor: userVotes[session.id] === -1 ? "#D13438" : "#C8C6C4",
+                          }}
+                          aria-label="Downvote"
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M10 15L5 10H9V5H11V10H15L10 15Z"
+                              fill="#D13438"
+                            />
+                          </svg>
+                          <span
+                            className="text-sm font-semibold"
+                            style={{ color: "#D13438" }}
+                          >
+                            {session.voteCounts?.downvotes || 0}
+                          </span>
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))}

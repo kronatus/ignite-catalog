@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const audienceType = searchParams.get("audienceType");
     const industry = searchParams.get("industry");
     const deliveryType = searchParams.get("deliveryType");
+    const voteFilter = searchParams.get("voteFilter");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
@@ -174,12 +175,74 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Get total count
-    const total = await prisma.session.count({ where });
+    // Get total count (before vote filtering)
+    const totalBeforeVoteFilter = await prisma.session.count({ where });
+
+    // If vote filtering is needed, we need to fetch all sessions first, calculate votes, filter, then paginate
+    const shouldFilterByVotes = voteFilter && (voteFilter === "high" || voteFilter === "low" || voteFilter === "none");
+    
+    // Common include clause for relations
+    const includeRelations = {
+      sessionTopics: {
+        include: {
+          topic: true,
+        },
+      },
+      sessionTags: {
+        include: {
+          tag: true,
+        },
+      },
+      sessionLevels: {
+        include: {
+          level: true,
+        },
+      },
+      sessionAudienceTypes: {
+        include: {
+          audienceType: true,
+        },
+      },
+      sessionIndustries: {
+        include: {
+          industry: true,
+        },
+      },
+      sessionDeliveryTypes: {
+        include: {
+          deliveryType: true,
+        },
+      },
+      sessionViewingOpts: {
+        include: {
+          viewingOption: true,
+        },
+      },
+      sessionSpeakers: {
+        include: {
+          speaker: {
+            include: {
+              speakerCompanies: {
+                include: {
+                  company: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    };
 
     // Fetch sessions with relations
-    // Priority: hasOnDemand=true first, then by startDateTime
-    const sessions = await prisma.session.findMany({
+    // If filtering by votes, fetch all matching sessions first
+    const sessionsToFetch = shouldFilterByVotes ? await prisma.session.findMany({
+      where,
+      orderBy: [
+        { hasOnDemand: "desc" }, // Recorded sessions first
+        { startDateTime: "desc" }, // Then by date
+      ],
+      include: includeRelations,
+    }) : await prisma.session.findMany({
       where,
       skip,
       take: limit,
@@ -187,65 +250,86 @@ export async function GET(request: NextRequest) {
         { hasOnDemand: "desc" }, // Recorded sessions first
         { startDateTime: "desc" }, // Then by date
       ],
-      include: {
-        sessionTopics: {
-          include: {
-            topic: true,
-          },
-        },
-        sessionTags: {
-          include: {
-            tag: true,
-          },
-        },
-        sessionLevels: {
-          include: {
-            level: true,
-          },
-        },
-        sessionAudienceTypes: {
-          include: {
-            audienceType: true,
-          },
-        },
-        sessionIndustries: {
-          include: {
-            industry: true,
-          },
-        },
-        sessionDeliveryTypes: {
-          include: {
-            deliveryType: true,
-          },
-        },
-        sessionViewingOpts: {
-          include: {
-            viewingOption: true,
-          },
-        },
-        sessionSpeakers: {
-          include: {
-            speaker: {
-              include: {
-                speakerCompanies: {
-                  include: {
-                    company: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+      include: includeRelations,
     });
 
+    // Get vote counts for each session
+    const sessionIds = sessionsToFetch.map((s) => s.id);
+    const voteStats = sessionIds.length > 0 ? await prisma.vote.groupBy({
+      by: ["sessionId", "value"],
+      where: {
+        sessionId: { in: sessionIds },
+      },
+    }) : [];
+
+    // Calculate vote counts per session
+    const voteCountsMap = new Map<
+      number,
+      { upvotes: number; downvotes: number; netVotes: number }
+    >();
+
+    for (const stat of voteStats) {
+      if (!voteCountsMap.has(stat.sessionId)) {
+        voteCountsMap.set(stat.sessionId, {
+          upvotes: 0,
+          downvotes: 0,
+          netVotes: 0,
+        });
+      }
+      const counts = voteCountsMap.get(stat.sessionId)!;
+      if (stat.value === 1) {
+        counts.upvotes = stat._count;
+      } else if (stat.value === -1) {
+        counts.downvotes = stat._count;
+      }
+      counts.netVotes = counts.upvotes - counts.downvotes;
+    }
+
+    // Add vote counts to sessions
+    let sessionsWithVotes = sessionsToFetch.map((session) => {
+      const voteCounts = voteCountsMap.get(session.id) || {
+        upvotes: 0,
+        downvotes: 0,
+        netVotes: 0,
+      };
+      return {
+        ...session,
+        voteCounts,
+      };
+    });
+
+    // Apply vote filter if specified
+    if (shouldFilterByVotes) {
+      if (voteFilter === "high") {
+        sessionsWithVotes = sessionsWithVotes.filter((s) => s.voteCounts.netVotes > 0);
+      } else if (voteFilter === "low") {
+        sessionsWithVotes = sessionsWithVotes.filter((s) => s.voteCounts.netVotes < 0);
+      } else if (voteFilter === "none") {
+        sessionsWithVotes = sessionsWithVotes.filter((s) => s.voteCounts.netVotes === 0);
+      }
+      
+      // Now paginate the filtered results
+      const totalAfterVoteFilter = sessionsWithVotes.length;
+      const paginatedSessions = sessionsWithVotes.slice(skip, skip + limit);
+      
+      return NextResponse.json({
+        sessions: paginatedSessions,
+        pagination: {
+          page,
+          limit,
+          total: totalAfterVoteFilter,
+          totalPages: Math.ceil(totalAfterVoteFilter / limit),
+        },
+      });
+    }
+
     return NextResponse.json({
-      sessions,
+      sessions: sessionsWithVotes,
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: totalBeforeVoteFilter,
+        totalPages: Math.ceil(totalBeforeVoteFilter / limit),
       },
     });
   } catch (err) {
