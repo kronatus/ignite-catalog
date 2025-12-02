@@ -260,6 +260,9 @@ export async function GET(request: NextRequest) {
       where: {
         sessionId: { in: sessionIds },
       },
+      _count: {
+        _all: true, 
+    }
     }) : [];
 
     // Calculate vote counts per session
