@@ -281,9 +281,9 @@ export async function GET(request: NextRequest) {
       }
       const counts = voteCountsMap.get(stat.sessionId)!;
       if (stat.value === 1) {
-        counts.upvotes = stat._count;
+        counts.upvotes = stat._count._all;
       } else if (stat.value === -1) {
-        counts.downvotes = stat._count;
+        counts.downvotes = stat._count._all;
       }
       counts.netVotes = counts.upvotes - counts.downvotes;
     }
