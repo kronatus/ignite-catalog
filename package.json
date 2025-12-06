@@ -12,11 +12,11 @@
   "dependencies": {
     "@prisma/client": "^6.0.0",
     "@tailwindcss/postcss": "^4",
-    "next": "16.0.4",
+    "next": "16.0.7",
     "pg": "^8.11.3",
     "prisma": "^6.0.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
@@ -28,6 +28,6 @@
     "autoprefixer": "^10.4.22",
     "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9",
-    "eslint-config-next": "16.0.4"
+    "eslint-config-next": "16.0.7"
   }
 }
