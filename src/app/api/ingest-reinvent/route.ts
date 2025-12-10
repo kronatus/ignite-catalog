@@ -45,12 +45,20 @@ export async function GET() {
 
 export async function POST() {
   try {
-    // Read reinvent.json from project root
-    const filePath = path.join(process.cwd(), "reinvent.json");
-    
-    if (!fs.existsSync(filePath)) {
+    // Read reinvent.json from project root (try common casings)
+    const candidates = ["reinvent.json", "Reinvent.json", "ReInvent.json"];
+    let filePath: string | null = null;
+    for (const c of candidates) {
+      const p = path.join(process.cwd(), c);
+      if (fs.existsSync(p)) {
+        filePath = p;
+        break;
+      }
+    }
+
+    if (!filePath) {
       return NextResponse.json(
-        { error: "reinvent.json not found in project root" },
+        { error: "reinvent.json not found in project root (tried reinvent.json/Reinvent.json)" },
         { status: 400 },
       );
     }
@@ -113,8 +121,9 @@ export async function POST() {
       ];
 
       for (const t of topicList) {
-        if (!t.displayName && !t.displayValue) continue;
-        const display = t.displayName || t.displayValue || "";
+        // t may have either `displayName` or `displayValue` depending on source
+        const display = 'displayName' in t ? (t.displayName || '') : ('displayValue' in t ? (t.displayValue || '') : '');
+        if (!display) continue;
         const logical = display; // Use display value as logical for Re:Invent
 
         const topic = await prisma.topic.upsert({
@@ -146,8 +155,8 @@ export async function POST() {
       // Area of Interest as Tags
       if (s.areaOfInterest && Array.isArray(s.areaOfInterest)) {
         for (const a of s.areaOfInterest) {
-          if (!a.displayName && !a.displayValue) continue;
-          const display = a.displayName || a.displayValue || "";
+          const display = 'displayName' in a ? (a.displayName || '') : ('displayValue' in a ? (a.displayValue || '') : '');
+          if (!display) continue;
           const logical = display;
 
           const tag = await prisma.tag.upsert({
@@ -211,8 +220,8 @@ export async function POST() {
       // Role as Audience Type
       if (s.role && Array.isArray(s.role)) {
         for (const r of s.role) {
-          if (!r.displayName && !r.displayValue) continue;
-          const display = r.displayName || r.displayValue || "";
+          const display = 'displayName' in r ? (r.displayName || '') : ('displayValue' in r ? (r.displayValue || '') : '');
+          if (!display) continue;
           const logical = display;
 
           const audience = await prisma.audienceType.upsert({
@@ -245,8 +254,8 @@ export async function POST() {
       // Industry
       if (s.industry && Array.isArray(s.industry)) {
         for (const i of s.industry) {
-          if (!i.displayName && !i.displayValue) continue;
-          const display = i.displayName || i.displayValue || "";
+          const display = 'displayName' in i ? (i.displayName || '') : ('displayValue' in i ? (i.displayValue || '') : '');
+          if (!display) continue;
           const logical = display;
 
           const industry = await prisma.industry.upsert({
