@@ -122,9 +122,9 @@ export async function POST() {
 
       for (const t of topicList) {
         // t may have either `displayName` or `displayValue` depending on source
-        const display = 'displayName' in t ? (t.displayName || '') : ('displayValue' in t ? (t.displayValue || '') : '');
+        const display: string = ('displayName' in t ? (t.displayName || '') : ('displayValue' in t ? (t.displayValue || '') : '')) as string;
         if (!display) continue;
-        const logical = display; // Use display value as logical for Re:Invent
+        const logical: string = String(display);
 
         const topic = await prisma.topic.upsert({
           where: { logicalValue: logical },
@@ -155,9 +155,9 @@ export async function POST() {
       // Area of Interest as Tags
       if (s.areaOfInterest && Array.isArray(s.areaOfInterest)) {
         for (const a of s.areaOfInterest) {
-          const display = 'displayName' in a ? (a.displayName || '') : ('displayValue' in a ? (a.displayValue || '') : '');
+          const display: string = ('displayName' in a ? (a.displayName || '') : ('displayValue' in a ? (a.displayValue || '') : '')) as string;
           if (!display) continue;
-          const logical = display;
+          const logical: string = String(display);
 
           const tag = await prisma.tag.upsert({
             where: { logicalValue: logical },
@@ -220,9 +220,9 @@ export async function POST() {
       // Role as Audience Type
       if (s.role && Array.isArray(s.role)) {
         for (const r of s.role) {
-          const display = 'displayName' in r ? (r.displayName || '') : ('displayValue' in r ? (r.displayValue || '') : '');
+          const display: string = ('displayName' in r ? (r.displayName || '') : ('displayValue' in r ? (r.displayValue || '') : '')) as string;
           if (!display) continue;
-          const logical = display;
+          const logical: string = String(display);
 
           const audience = await prisma.audienceType.upsert({
             where: { logicalValue: logical },
@@ -254,9 +254,9 @@ export async function POST() {
       // Industry
       if (s.industry && Array.isArray(s.industry)) {
         for (const i of s.industry) {
-          const display = 'displayName' in i ? (i.displayName || '') : ('displayValue' in i ? (i.displayValue || '') : '');
+          const display: string = ('displayName' in i ? (i.displayName || '') : ('displayValue' in i ? (i.displayValue || '') : '')) as string;
           if (!display) continue;
-          const logical = display;
+          const logical: string = String(display);
 
           const industry = await prisma.industry.upsert({
             where: { logicalValue: logical },
