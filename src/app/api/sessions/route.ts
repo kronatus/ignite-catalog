@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const hasOnDemand = searchParams.get("hasOnDemand");
     const topic = searchParams.get("topic");
     const tag = searchParams.get("tag");
+    const sessionType = searchParams.get("sessionType");
     const level = searchParams.get("level");
     const audienceType = searchParams.get("audienceType");
     const industry = searchParams.get("industry");
@@ -129,6 +130,26 @@ export async function GET(request: NextRequest) {
           },
         },
       };
+    }
+
+    // Filter by session type (logical or display value stored on session)
+    if (sessionType) {
+      const sessionTypeClause = {
+        OR: [
+          { sessionTypeLogical: sessionType },
+          { sessionTypeDisplay: sessionType },
+        ],
+      };
+
+      // If there's already an OR search clause, combine using AND so both conditions apply
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, sessionTypeClause];
+        delete where.OR;
+      } else if (where.AND) {
+        where.AND = [...where.AND, sessionTypeClause];
+      } else {
+        where.AND = [sessionTypeClause];
+      }
     }
 
     // Filter by level

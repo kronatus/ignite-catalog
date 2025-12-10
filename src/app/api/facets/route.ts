@@ -89,6 +89,22 @@ export async function GET() {
       prisma.session.count({ where: { hasOnDemand: false } }),
     ]);
 
+    // Session types: aggregate by logical/display values from sessions
+    const sessionTypeGroups = await prisma.session.groupBy({
+      by: ["sessionTypeLogical", "sessionTypeDisplay"],
+      where: { sessionTypeLogical: { not: null } },
+      _count: { _all: true },
+    });
+
+    const sessionTypes = sessionTypeGroups
+      .map((g) => ({
+        id: hashString(g.sessionTypeLogical || g.sessionTypeDisplay || ""),
+        logicalValue: g.sessionTypeLogical || g.sessionTypeDisplay || "",
+        displayValue: g.sessionTypeDisplay || g.sessionTypeLogical || "",
+        count: g._count._all,
+      }))
+      .filter((s) => s.logicalValue);
+
     return NextResponse.json({
       topics: categorizedTopics,
       tags,
@@ -96,6 +112,7 @@ export async function GET() {
       audienceTypes,
       industries,
       deliveryTypes,
+      sessionTypes,
       recordedCount,
       nonRecordedCount,
     });

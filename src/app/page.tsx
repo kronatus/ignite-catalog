@@ -49,6 +49,7 @@ type Facets = {
   deliveryTypes: Array<{ id: number; logicalValue: string; displayValue: string }>;
   recordedCount: number;
   nonRecordedCount: number;
+  sessionTypes?: Array<{ id: number; logicalValue: string; displayValue: string }>;
 };
 
 // Generate or retrieve user identifier from localStorage
@@ -77,6 +78,7 @@ export default function Home() {
     audienceType: "",
     industry: "",
     deliveryType: "",
+    sessionType: "",
     voteFilter: "",
   });
   const [page, setPage] = useState(1);
@@ -112,6 +114,7 @@ export default function Home() {
       if (filters.audienceType) params.set("audienceType", filters.audienceType);
       if (filters.industry) params.set("industry", filters.industry);
       if (filters.deliveryType) params.set("deliveryType", filters.deliveryType);
+      if (filters.sessionType) params.set("sessionType", filters.sessionType);
       if (filters.voteFilter) params.set("voteFilter", filters.voteFilter);
       params.set("page", page.toString());
       params.set("limit", "20");
@@ -166,6 +169,7 @@ export default function Home() {
       audienceType: "",
       industry: "",
       deliveryType: "",
+      sessionType: "",
       voteFilter: "",
     });
     setSearch("");
@@ -365,6 +369,23 @@ export default function Home() {
                   {facets.levels.map((l) => (
                     <option key={l.id} value={l.logicalValue}>
                       {l.displayValue}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {facets.sessionTypes && facets.sessionTypes.length > 0 && (
+                <select
+                  value={filters.sessionType}
+                  onChange={(e) => handleFilterChange("sessionType", e.target.value)}
+                  aria-label="Filter by session type"
+                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
+                  style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
+                >
+                  <option value="">All Session Types</option>
+                  {facets.sessionTypes.map((s) => (
+                    <option key={s.id} value={s.logicalValue}>
+                      {s.displayValue}
                     </option>
                   ))}
                 </select>
