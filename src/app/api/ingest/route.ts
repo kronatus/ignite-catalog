@@ -175,7 +175,7 @@ export async function POST() {
 
       // Check if session existed before by trying to find it first
       const existing = await prisma.session.findUnique({
-        where: { sessionId: s.sessionId },
+        where: { eventSource_sessionId: { eventSource: "Ignite", sessionId: s.sessionId } },
       });
       if (existing) {
         updated += 1;
