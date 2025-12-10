@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
   categorizeTopic,
@@ -6,8 +6,13 @@ import {
   type TopicCategory,
 } from "@/lib/topicCategorization";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const eventSource = searchParams.get("eventSource") || ""; // Filter by event source if provided
+
+    const where = eventSource ? { eventSource } : {};
+
     const [allTopics, tags, levels, audienceTypes, industries, deliveryTypes] =
       await Promise.all([
         prisma.topic.findMany({ orderBy: { displayValue: "asc" } }),
@@ -46,6 +51,7 @@ export async function GET() {
       // Count unique sessions that have at least one topic in this category
       const count = await prisma.session.count({
         where: {
+          ...where,
           sessionTopics: {
             some: {
               topic: {
@@ -85,14 +91,14 @@ export async function GET() {
 
     // Get counts for recorded vs non-recorded
     const [recordedCount, nonRecordedCount] = await Promise.all([
-      prisma.session.count({ where: { hasOnDemand: true } }),
-      prisma.session.count({ where: { hasOnDemand: false } }),
+      prisma.session.count({ where: { ...where, hasOnDemand: true } }),
+      prisma.session.count({ where: { ...where, hasOnDemand: false } }),
     ]);
 
     // Session types: aggregate by logical/display values from sessions
     const sessionTypeGroups = await prisma.session.groupBy({
       by: ["sessionTypeLogical", "sessionTypeDisplay"],
-      where: { sessionTypeLogical: { not: null } },
+      where: { ...where, sessionTypeLogical: { not: null } },
       _count: { _all: true },
     });
 
@@ -115,6 +121,7 @@ export async function GET() {
       sessionTypes,
       recordedCount,
       nonRecordedCount,
+      eventSources: ["Ignite", "ReInvent"], // Available event sources
     });
   } catch (err) {
     console.error("Facets query error", err);

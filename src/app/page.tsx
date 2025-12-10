@@ -50,6 +50,7 @@ type Facets = {
   recordedCount: number;
   nonRecordedCount: number;
   sessionTypes?: Array<{ id: number; logicalValue: string; displayValue: string }>;
+  eventSources?: string[]; // Available event sources (e.g., ["Ignite", "ReInvent"])
 };
 
 // Generate or retrieve user identifier from localStorage
@@ -71,6 +72,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [userVotes, setUserVotes] = useState<Record<number, 1 | -1 | null>>({});
   const [filters, setFilters] = useState({
+    eventSource: "",
     hasOnDemand: "",
     topic: "",
     tag: "",
@@ -107,6 +109,7 @@ export default function Home() {
     try {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
+      if (filters.eventSource) params.set("eventSource", filters.eventSource);
       if (filters.hasOnDemand) params.set("hasOnDemand", filters.hasOnDemand);
       if (filters.topic) params.set("topic", filters.topic);
       if (filters.tag) params.set("tag", filters.tag);
@@ -162,6 +165,7 @@ export default function Home() {
 
   const clearFilters = () => {
     setFilters({
+      eventSource: "",
       hasOnDemand: "",
       topic: "",
       tag: "",
@@ -309,6 +313,23 @@ export default function Home() {
 
         {/* Filters */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {facets && facets.eventSources && facets.eventSources.length > 1 && (
+            <select
+              value={filters.eventSource}
+              onChange={(e) => handleFilterChange("eventSource", e.target.value)}
+              aria-label="Filter by event source"
+              className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
+              style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
+            >
+              <option value="">All Events</option>
+              {facets.eventSources.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
+            </select>
+          )}
+
           <select
             value={filters.hasOnDemand}
             onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}

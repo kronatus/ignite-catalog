@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get("search") || "";
+    const eventSource = searchParams.get("eventSource") || ""; // Filter by event source
     const hasOnDemand = searchParams.get("hasOnDemand");
     const topic = searchParams.get("topic");
     const tag = searchParams.get("tag");
@@ -21,6 +22,11 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {};
+
+    // Add event source filter if provided
+    if (eventSource) {
+      where.eventSource = eventSource;
+    }
 
     // Search in title, description, aiDescription, speakers, companies, tags, and topics
     // SQLite doesn't support case-insensitive mode, so we use contains

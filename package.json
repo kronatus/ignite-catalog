@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "generate": "npx prisma generate",
     "start": "next start",
     "lint": "eslint"
@@ -12,6 +12,7 @@
   "dependencies": {
     "@prisma/client": "^6.0.0",
     "@tailwindcss/postcss": "^4",
+    "dotenv": "^17.2.3",
     "next": "16.0.7",
     "pg": "^8.11.3",
     "prisma": "^6.0.0",

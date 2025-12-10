@@ -112,9 +112,10 @@ export async function POST() {
       const hasOnDemand = computeHasOnDemand(s);
 
       const sessionRecord = await prisma.session.upsert({
-        where: { sessionId: s.sessionId },
+        where: { eventSource_sessionId: { eventSource: "Ignite", sessionId: s.sessionId } },
         create: {
           sessionId: s.sessionId,
+          eventSource: "Ignite",
           sessionInstanceId: s.sessionInstanceId ?? null,
           localizedId: s.localizedId ?? null,
           sessionCode: s.sessionCode ?? null,
