@@ -12,6 +12,7 @@ type ReInventSession = {
   endDateTime?: string;
   startTime?: string;
   endTime?: string;
+  youtubeUrl?: string;
   speakers?: Array<{
     id?: string;
     displayName?: string;
@@ -103,8 +104,9 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Compute hasOnDemand (Re:Invent sessions may not have on-demand URLs in catalog)
-      const hasOnDemand = false; // Default to false for Re:Invent sessions
+      // Compute hasOnDemand based on youtubeUrl (Re:Invent sessions with videos are recorded)
+      const hasOnDemand = !!s.youtubeUrl;
+      const onDemandUrl = s.youtubeUrl ?? null;
 
       const sessionRecord = await prisma.session.create({
         data: {
@@ -120,6 +122,7 @@ export async function POST(request: NextRequest) {
           sessionTypeDisplay: s.type?.displayName ?? null,
           sessionTypeLogical: s.type?.displayName ?? null,
           hasOnDemand,
+          onDemandUrl,
           isPopular: false,
           heroSession: false,
         },
