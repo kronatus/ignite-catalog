@@ -94,12 +94,20 @@ export async function POST(request: NextRequest) {
       try {
       if (!s.id || !s.title) continue;
 
+      // Skip if session already exists (for resumable ingestion)
+      const existing = await prisma.session.findUnique({
+        where: { eventSource_sessionId: { eventSource: "ReInvent", sessionId: s.id } },
+      });
+      if (existing) {
+        updated += 1;
+        continue;
+      }
+
       // Compute hasOnDemand (Re:Invent sessions may not have on-demand URLs in catalog)
       const hasOnDemand = false; // Default to false for Re:Invent sessions
 
-      const sessionRecord = await prisma.session.upsert({
-        where: { eventSource_sessionId: { eventSource: "ReInvent", sessionId: s.id } },
-        create: {
+      const sessionRecord = await prisma.session.create({
+        data: {
           sessionId: s.id,
           eventSource: "ReInvent",
           sessionInstanceId: s.shortId ?? null,
@@ -114,17 +122,6 @@ export async function POST(request: NextRequest) {
           hasOnDemand,
           isPopular: false,
           heroSession: false,
-        },
-        update: {
-          title: s.title,
-          description: s.abstract ?? null,
-          location: s.venueRoomName ?? null,
-          timeSlot: s.day ?? null,
-          startDateTime: s.startDateTime ? new Date(s.startDateTime) : null,
-          endDateTime: s.endDateTime ? new Date(s.endDateTime) : null,
-          sessionTypeDisplay: s.type?.displayName ?? null,
-          sessionTypeLogical: s.type?.displayName ?? null,
-          hasOnDemand,
         },
       });
 
@@ -392,17 +389,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Track creates/updates
-      const existing = await prisma.session.findUnique({
-        where: {
-          id: sessionRecord.id,
-        },
-      });
-      if (existing) {
-        updated += 1;
-      } else {
-        created += 1;
-      }
+      // Count as created (we already skipped existing ones above)
+      created += 1;
       // continue loop
       continue;
       } catch (e: any) {
