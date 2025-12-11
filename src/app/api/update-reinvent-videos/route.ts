@@ -13,6 +13,13 @@ type ReInventSession = {
   youtubeUrl?: string;
 };
 
+export async function GET() {
+  return NextResponse.json(
+    { message: "Use POST method to update Re:Invent videos" },
+    { status: 405 }
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Read reinvent.json
