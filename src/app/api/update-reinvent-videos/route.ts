@@ -47,15 +47,26 @@ export async function POST(request: NextRequest) {
       if (!session.id) continue;
 
       if (session.youtubeUrl) {
-        const result = await prisma.session.updateMany({
-          where: { eventSource_sessionId: { eventSource: "ReInvent", sessionId: session.id } },
-          data: {
-            onDemandUrl: session.youtubeUrl,
-            hasOnDemand: true,
+        // Find the session first using the composite unique key
+        const existingSession = await prisma.session.findUnique({
+          where: {
+            eventSource_sessionId: {
+              eventSource: "ReInvent",
+              sessionId: session.id,
+            },
           },
         });
-        if (result.count > 0) {
-          updated += result.count;
+
+        // If found, update by id
+        if (existingSession) {
+          await prisma.session.update({
+            where: { id: existingSession.id },
+            data: {
+              onDemandUrl: session.youtubeUrl,
+              hasOnDemand: true,
+            },
+          });
+          updated++;
         }
       }
     }
