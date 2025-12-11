@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as fs from "fs";
 import * as path from "path";
@@ -43,7 +43,7 @@ export async function GET() {
   );
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     // Read reinvent.json from project root (try common casings)
     const candidates = ["reinvent.json", "Reinvent.json", "ReInvent.json"];
@@ -67,6 +67,17 @@ export async function POST() {
     const data = JSON.parse(fileContent);
     const raw = (data.catalog || data) as ReInventSession[];
 
+    // Support resumable/chunked ingestion to avoid function timeouts.
+    // Query params:
+    // - start: numeric index in the JSON array to begin processing (default 0)
+    // - batchSize: number of items to process in this invocation (default 200)
+    const params = request.nextUrl?.searchParams;
+    const start = params && params.get("start") ? parseInt(params.get("start") as string, 10) || 0 : 0;
+    const batchSize = params && params.get("batchSize") ? parseInt(params.get("batchSize") as string, 10) || 200 : 200;
+
+    const total = raw.length;
+    const slice = raw.slice(start, Math.min(start + batchSize, total));
+
     if (!Array.isArray(raw)) {
       return NextResponse.json(
         { error: "Invalid reinvent.json format: expected array or object with 'catalog' array" },
@@ -76,8 +87,11 @@ export async function POST() {
 
     let created = 0;
     let updated = 0;
+    const errors: Array<{ index: number; id?: string; message: string }> = [];
 
-    for (const s of raw) {
+    for (const [idx, s] of slice.entries()) {
+      const globalIndex = start + idx;
+      try {
       if (!s.id || !s.title) continue;
 
       // Compute hasOnDemand (Re:Invent sessions may not have on-demand URLs in catalog)
@@ -389,12 +403,27 @@ export async function POST() {
       } else {
         created += 1;
       }
+      // continue loop
+      continue;
+      } catch (e: any) {
+        console.error(`Error processing Re:Invent item at index ${globalIndex}`, e);
+        errors.push({ index: globalIndex, id: s.id, message: e instanceof Error ? e.message : String(e) });
+        // continue with next item
+        continue;
+      }
     }
 
+    const processed = slice.length - errors.length;
+    const nextStart = start + slice.length;
+
     return NextResponse.json({
-      total: raw.length,
+      total,
+      processed,
       created,
       updated,
+      errors,
+      nextStart: nextStart >= total ? null : nextStart,
+      finished: nextStart >= total,
       source: "ReInvent",
     });
   } catch (err) {
