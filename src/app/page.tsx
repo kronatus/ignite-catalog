@@ -263,10 +263,10 @@ export default function Home() {
           <div className="flex items-center gap-3 mb-2">
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect width="32" height="32" fill="white" fillOpacity="0.2" rx="4"/>
-              <path d="M16 8L24 14V24H20V16H12V24H8V14L16 8Z" fill="white"/>
+              <path d="M8 4C6.9 4 6 4.9 6 6V26C6 27.1 6.9 28 8 28H24C25.1 28 26 27.1 26 26V8L20 4H8ZM18 10V6H20L24 10V26H8V6H18V10Z" fill="white"/>
             </svg>
             <h1 className="text-3xl font-semibold text-white" style={{ letterSpacing: "-0.02em" }}>
-              Microsoft Ignite Sessions Explorer
+              Ignite & Re:Invent 2025 Sessions Explorer
             </h1>
           </div>
           <p className="text-sm mt-1 ml-11" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
