@@ -311,6 +311,41 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Recording Filter Radio Buttons */}
+        <div className="mb-6">
+          <div className="flex items-center gap-6 bg-white rounded-md p-4 border border-[#C8C6C4]" style={{ boxShadow: "var(--ms-shadow-2)" }}>
+            <span className="text-sm font-semibold" style={{ color: "#323130" }}>
+              Show:
+            </span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="recordingFilter"
+                value=""
+                checked={filters.hasOnDemand === ""}
+                onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
+                className="w-4 h-4 text-[#0078D4] border-[#C8C6C4] focus:ring-[#0078D4] focus:ring-2"
+              />
+              <span className="text-sm font-medium" style={{ color: "#323130" }}>
+                All Sessions
+              </span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="recordingFilter"
+                value="true"
+                checked={filters.hasOnDemand === "true"}
+                onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
+                className="w-4 h-4 text-[#0078D4] border-[#C8C6C4] focus:ring-[#0078D4] focus:ring-2"
+              />
+              <span className="text-sm font-medium" style={{ color: "#323130" }}>
+                Recorded Only
+              </span>
+            </label>
+          </div>
+        </div>
+
         {/* Filters */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {facets && facets.eventSources && facets.eventSources.length > 1 && (
@@ -321,7 +356,7 @@ export default function Home() {
               className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
               style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
             >
-              <option value="">All Events</option>
+              <option value="">All Conferences</option>
               {facets.eventSources.map((source) => (
                 <option key={source} value={source}>
                   {source}
@@ -330,17 +365,7 @@ export default function Home() {
             </select>
           )}
 
-          <select
-            value={filters.hasOnDemand}
-            onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
-            aria-label="Filter by recording availability"
-            className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
-            style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
-          >
-            <option value="">All Sessions</option>
-            <option value="true">Recorded Only</option>
-            <option value="false">Not Recorded</option>
-          </select>
+
 
           {facets && (
             <>
@@ -545,7 +570,7 @@ export default function Home() {
                       </h2>
                       {session.description && (
                         <p 
-                          className="mb-3 line-clamp-2 leading-relaxed"
+                          className="mb-3 leading-relaxed"
                           style={{ color: "#605E5C" }}
                         >
                           {session.description}

@@ -5,6 +5,11 @@ import {
   getAllTopicCategories,
   type TopicCategory,
 } from "@/lib/topicCategorization";
+import {
+  categorizeSessionType,
+  getAllSessionTypeCategories,
+  type SessionTypeCategory,
+} from "@/lib/sessionTypeCategorization";
 
 export async function GET(request: NextRequest) {
   try {
@@ -95,21 +100,80 @@ export async function GET(request: NextRequest) {
       prisma.session.count({ where: { ...where, hasOnDemand: false } }),
     ]);
 
-    // Session types: aggregate by logical/display values from sessions
-    const sessionTypeGroups = await prisma.session.groupBy({
-      by: ["sessionTypeLogical", "sessionTypeDisplay"],
-      where: { ...where, sessionTypeLogical: { not: null } },
-      _count: { _all: true },
+    // Session types: get all sessions with session types and categorize them
+    const allSessionsWithTypes = await prisma.session.findMany({
+      where: {
+        ...where,
+        OR: [
+          { sessionTypeLogical: { not: null } },
+          { sessionTypeDisplay: { not: null } }
+        ]
+      },
+      select: {
+        sessionTypeLogical: true,
+        sessionTypeDisplay: true,
+      },
     });
 
-    const sessionTypes = sessionTypeGroups
-      .map((g) => ({
-        id: hashString(g.sessionTypeLogical || g.sessionTypeDisplay || ""),
-        logicalValue: g.sessionTypeLogical || g.sessionTypeDisplay || "",
-        displayValue: g.sessionTypeDisplay || g.sessionTypeLogical || "",
-        count: g._count._all,
+    // Categorize session types and build a map of category -> session type logical values
+    const categoryToSessionTypes = new Map<string, Set<string>>();
+    for (const session of allSessionsWithTypes) {
+      const logicalValue = session.sessionTypeLogical || session.sessionTypeDisplay || "";
+      const displayValue = session.sessionTypeDisplay || session.sessionTypeLogical || "";
+      
+      if (logicalValue) {
+        const category = categorizeSessionType(logicalValue, displayValue);
+        if (!categoryToSessionTypes.has(category.logicalValue)) {
+          categoryToSessionTypes.set(category.logicalValue, new Set());
+        }
+        categoryToSessionTypes.get(category.logicalValue)!.add(logicalValue);
+      }
+    }
+
+    // Get session counts for each category
+    const sessionTypeCategoryCounts = new Map<string, number>();
+    const allSessionTypeCategories = getAllSessionTypeCategories();
+
+    for (const category of allSessionTypeCategories) {
+      const sessionTypeLogicalValues = Array.from(categoryToSessionTypes.get(category.logicalValue) || []);
+      
+      if (sessionTypeLogicalValues.length === 0) {
+        sessionTypeCategoryCounts.set(category.logicalValue, 0);
+        continue;
+      }
+
+      // Count unique sessions that have at least one session type in this category
+      const count = await prisma.session.count({
+        where: {
+          ...where,
+          OR: [
+            {
+              sessionTypeLogical: {
+                in: sessionTypeLogicalValues,
+              },
+            },
+            {
+              sessionTypeDisplay: {
+                in: sessionTypeLogicalValues,
+              },
+            },
+          ],
+        },
+      });
+
+      sessionTypeCategoryCounts.set(category.logicalValue, count);
+    }
+
+    // Build categorized session types array with counts, only including categories with sessions
+    const sessionTypes = allSessionTypeCategories
+      .map((category) => ({
+        id: hashString(category.logicalValue),
+        logicalValue: category.logicalValue,
+        displayValue: category.displayValue,
+        count: sessionTypeCategoryCounts.get(category.logicalValue) || 0,
       }))
-      .filter((s) => s.logicalValue);
+      .filter((cat) => cat.count > 0) // Only include categories with sessions
+      .sort((a, b) => b.count - a.count); // Sort by count descending
 
     return NextResponse.json({
       topics: categorizedTopics,

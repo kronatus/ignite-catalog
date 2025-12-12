@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { categorizeTopic } from "@/lib/topicCategorization";
+import { categorizeSessionType } from "@/lib/sessionTypeCategorization";
 
 export async function GET(request: NextRequest) {
   try {
@@ -138,23 +139,80 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Filter by session type (logical or display value stored on session)
+    // Filter by session type (handles both individual session types and categorized session types)
     if (sessionType) {
-      const sessionTypeClause = {
-        OR: [
-          { sessionTypeLogical: sessionType },
-          { sessionTypeDisplay: sessionType },
-        ],
-      };
+      // Get all sessions with session types to find which ones match the category
+      const allSessionsWithTypes = await prisma.session.findMany({
+        select: {
+          sessionTypeLogical: true,
+          sessionTypeDisplay: true,
+        },
+        where: {
+          OR: [
+            { sessionTypeLogical: { not: null } },
+            { sessionTypeDisplay: { not: null } }
+          ]
+        }
+      });
 
-      // If there's already an OR search clause, combine using AND so both conditions apply
-      if (where.OR) {
-        where.AND = [{ OR: where.OR }, sessionTypeClause];
-        delete where.OR;
-      } else if (where.AND) {
-        where.AND = [...where.AND, sessionTypeClause];
+      // Find all session type values that belong to this category
+      const matchingSessionTypes = new Set<string>();
+      for (const session of allSessionsWithTypes) {
+        const logicalValue = session.sessionTypeLogical || session.sessionTypeDisplay || "";
+        const displayValue = session.sessionTypeDisplay || session.sessionTypeLogical || "";
+        
+        if (logicalValue) {
+          const category = categorizeSessionType(logicalValue, displayValue);
+          if (category.logicalValue === sessionType) {
+            matchingSessionTypes.add(logicalValue);
+          }
+        }
+      }
+
+      if (matchingSessionTypes.size > 0) {
+        // It's a category - filter by all session types in that category
+        const sessionTypeClause = {
+          OR: [
+            {
+              sessionTypeLogical: {
+                in: Array.from(matchingSessionTypes),
+              },
+            },
+            {
+              sessionTypeDisplay: {
+                in: Array.from(matchingSessionTypes),
+              },
+            },
+          ],
+        };
+
+        // If there's already an OR search clause, combine using AND so both conditions apply
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, sessionTypeClause];
+          delete where.OR;
+        } else if (where.AND) {
+          where.AND = [...where.AND, sessionTypeClause];
+        } else {
+          where.AND = [sessionTypeClause];
+        }
       } else {
-        where.AND = [sessionTypeClause];
+        // It's an individual session type - filter by that session type
+        const sessionTypeClause = {
+          OR: [
+            { sessionTypeLogical: sessionType },
+            { sessionTypeDisplay: sessionType },
+          ],
+        };
+
+        // If there's already an OR search clause, combine using AND so both conditions apply
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, sessionTypeClause];
+          delete where.OR;
+        } else if (where.AND) {
+          where.AND = [...where.AND, sessionTypeClause];
+        } else {
+          where.AND = [sessionTypeClause];
+        }
       }
     }
 
