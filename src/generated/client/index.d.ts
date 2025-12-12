@@ -3005,6 +3005,7 @@ export namespace Prisma {
   export type SessionMinAggregateOutputType = {
     id: number | null
     sessionId: string | null
+    eventSource: string | null
     sessionInstanceId: string | null
     localizedId: string | null
     sessionCode: string | null
@@ -3034,6 +3035,7 @@ export namespace Prisma {
   export type SessionMaxAggregateOutputType = {
     id: number | null
     sessionId: string | null
+    eventSource: string | null
     sessionInstanceId: string | null
     localizedId: string | null
     sessionCode: string | null
@@ -3063,6 +3065,7 @@ export namespace Prisma {
   export type SessionCountAggregateOutputType = {
     id: number
     sessionId: number
+    eventSource: number
     sessionInstanceId: number
     localizedId: number
     sessionCode: number
@@ -3104,6 +3107,7 @@ export namespace Prisma {
   export type SessionMinAggregateInputType = {
     id?: true
     sessionId?: true
+    eventSource?: true
     sessionInstanceId?: true
     localizedId?: true
     sessionCode?: true
@@ -3133,6 +3137,7 @@ export namespace Prisma {
   export type SessionMaxAggregateInputType = {
     id?: true
     sessionId?: true
+    eventSource?: true
     sessionInstanceId?: true
     localizedId?: true
     sessionCode?: true
@@ -3162,6 +3167,7 @@ export namespace Prisma {
   export type SessionCountAggregateInputType = {
     id?: true
     sessionId?: true
+    eventSource?: true
     sessionInstanceId?: true
     localizedId?: true
     sessionCode?: true
@@ -3278,6 +3284,7 @@ export namespace Prisma {
   export type SessionGroupByOutputType = {
     id: number
     sessionId: string
+    eventSource: string
     sessionInstanceId: string | null
     localizedId: string | null
     sessionCode: string | null
@@ -3326,6 +3333,7 @@ export namespace Prisma {
   export type SessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     sessionId?: boolean
+    eventSource?: boolean
     sessionInstanceId?: boolean
     localizedId?: boolean
     sessionCode?: boolean
@@ -3365,6 +3373,7 @@ export namespace Prisma {
   export type SessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     sessionId?: boolean
+    eventSource?: boolean
     sessionInstanceId?: boolean
     localizedId?: boolean
     sessionCode?: boolean
@@ -3394,6 +3403,7 @@ export namespace Prisma {
   export type SessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     sessionId?: boolean
+    eventSource?: boolean
     sessionInstanceId?: boolean
     localizedId?: boolean
     sessionCode?: boolean
@@ -3423,6 +3433,7 @@ export namespace Prisma {
   export type SessionSelectScalar = {
     id?: boolean
     sessionId?: boolean
+    eventSource?: boolean
     sessionInstanceId?: boolean
     localizedId?: boolean
     sessionCode?: boolean
@@ -3449,7 +3460,7 @@ export namespace Prisma {
     heroSession?: boolean
   }
 
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionId" | "sessionInstanceId" | "localizedId" | "sessionCode" | "langLocale" | "title" | "sortTitle" | "description" | "aiDescription" | "location" | "timeSlot" | "startDateTime" | "endDateTime" | "durationInMinutes" | "sessionTypeDisplay" | "sessionTypeLogical" | "reportingTopic" | "onDemandUrl" | "downloadVideoUrl" | "captionFileUrl" | "thumbnailUrl" | "registrationLink" | "hasOnDemand" | "isPopular" | "heroSession", ExtArgs["result"]["session"]>
+  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "sessionId" | "eventSource" | "sessionInstanceId" | "localizedId" | "sessionCode" | "langLocale" | "title" | "sortTitle" | "description" | "aiDescription" | "location" | "timeSlot" | "startDateTime" | "endDateTime" | "durationInMinutes" | "sessionTypeDisplay" | "sessionTypeLogical" | "reportingTopic" | "onDemandUrl" | "downloadVideoUrl" | "captionFileUrl" | "thumbnailUrl" | "registrationLink" | "hasOnDemand" | "isPopular" | "heroSession", ExtArgs["result"]["session"]>
   export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sessionTopics?: boolean | Session$sessionTopicsArgs<ExtArgs>
     sessionTags?: boolean | Session$sessionTagsArgs<ExtArgs>
@@ -3481,6 +3492,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       sessionId: string
+      eventSource: string
       sessionInstanceId: string | null
       localizedId: string | null
       sessionCode: string | null
@@ -3939,6 +3951,7 @@ export namespace Prisma {
   interface SessionFieldRefs {
     readonly id: FieldRef<"Session", 'Int'>
     readonly sessionId: FieldRef<"Session", 'String'>
+    readonly eventSource: FieldRef<"Session", 'String'>
     readonly sessionInstanceId: FieldRef<"Session", 'String'>
     readonly localizedId: FieldRef<"Session", 'String'>
     readonly sessionCode: FieldRef<"Session", 'String'>
@@ -25017,6 +25030,7 @@ export namespace Prisma {
   export const SessionScalarFieldEnum: {
     id: 'id',
     sessionId: 'sessionId',
+    eventSource: 'eventSource',
     sessionInstanceId: 'sessionInstanceId',
     localizedId: 'localizedId',
     sessionCode: 'sessionCode',
@@ -25311,6 +25325,7 @@ export namespace Prisma {
     NOT?: SessionWhereInput | SessionWhereInput[]
     id?: IntFilter<"Session"> | number
     sessionId?: StringFilter<"Session"> | string
+    eventSource?: StringFilter<"Session"> | string
     sessionInstanceId?: StringNullableFilter<"Session"> | string | null
     localizedId?: StringNullableFilter<"Session"> | string | null
     sessionCode?: StringNullableFilter<"Session"> | string | null
@@ -25349,6 +25364,7 @@ export namespace Prisma {
   export type SessionOrderByWithRelationInput = {
     id?: SortOrder
     sessionId?: SortOrder
+    eventSource?: SortOrder
     sessionInstanceId?: SortOrderInput | SortOrder
     localizedId?: SortOrderInput | SortOrder
     sessionCode?: SortOrderInput | SortOrder
@@ -25386,10 +25402,12 @@ export namespace Prisma {
 
   export type SessionWhereUniqueInput = Prisma.AtLeast<{
     id?: number
-    sessionId?: string
+    eventSource_sessionId?: SessionEventSourceSessionIdCompoundUniqueInput
     AND?: SessionWhereInput | SessionWhereInput[]
     OR?: SessionWhereInput[]
     NOT?: SessionWhereInput | SessionWhereInput[]
+    sessionId?: StringFilter<"Session"> | string
+    eventSource?: StringFilter<"Session"> | string
     sessionInstanceId?: StringNullableFilter<"Session"> | string | null
     localizedId?: StringNullableFilter<"Session"> | string | null
     sessionCode?: StringNullableFilter<"Session"> | string | null
@@ -25423,11 +25441,12 @@ export namespace Prisma {
     sessionViewingOpts?: SessionViewingOptionOnSessionListRelationFilter
     sessionSpeakers?: SessionSpeakerListRelationFilter
     votes?: VoteListRelationFilter
-  }, "id" | "sessionId">
+  }, "id" | "eventSource_sessionId">
 
   export type SessionOrderByWithAggregationInput = {
     id?: SortOrder
     sessionId?: SortOrder
+    eventSource?: SortOrder
     sessionInstanceId?: SortOrderInput | SortOrder
     localizedId?: SortOrderInput | SortOrder
     sessionCode?: SortOrderInput | SortOrder
@@ -25465,6 +25484,7 @@ export namespace Prisma {
     NOT?: SessionScalarWhereWithAggregatesInput | SessionScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Session"> | number
     sessionId?: StringWithAggregatesFilter<"Session"> | string
+    eventSource?: StringWithAggregatesFilter<"Session"> | string
     sessionInstanceId?: StringNullableWithAggregatesFilter<"Session"> | string | null
     localizedId?: StringNullableWithAggregatesFilter<"Session"> | string | null
     sessionCode?: StringNullableWithAggregatesFilter<"Session"> | string | null
@@ -26391,6 +26411,7 @@ export namespace Prisma {
 
   export type SessionCreateInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -26429,6 +26450,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -26466,6 +26488,7 @@ export namespace Prisma {
 
   export type SessionUpdateInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26504,6 +26527,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26542,6 +26566,7 @@ export namespace Prisma {
   export type SessionCreateManyInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -26570,6 +26595,7 @@ export namespace Prisma {
 
   export type SessionUpdateManyMutationInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26599,6 +26625,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27537,9 +27564,15 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type SessionEventSourceSessionIdCompoundUniqueInput = {
+    eventSource: string
+    sessionId: string
+  }
+
   export type SessionCountOrderByAggregateInput = {
     id?: SortOrder
     sessionId?: SortOrder
+    eventSource?: SortOrder
     sessionInstanceId?: SortOrder
     localizedId?: SortOrder
     sessionCode?: SortOrder
@@ -27574,6 +27607,7 @@ export namespace Prisma {
   export type SessionMaxOrderByAggregateInput = {
     id?: SortOrder
     sessionId?: SortOrder
+    eventSource?: SortOrder
     sessionInstanceId?: SortOrder
     localizedId?: SortOrder
     sessionCode?: SortOrder
@@ -27603,6 +27637,7 @@ export namespace Prisma {
   export type SessionMinOrderByAggregateInput = {
     id?: SortOrder
     sessionId?: SortOrder
+    eventSource?: SortOrder
     sessionInstanceId?: SortOrder
     localizedId?: SortOrder
     sessionCode?: SortOrder
@@ -30077,6 +30112,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionTopicsInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30114,6 +30150,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionTopicsInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30182,6 +30219,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionTopicsInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30219,6 +30257,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionTopicsInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30311,6 +30350,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionTagsInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30348,6 +30388,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionTagsInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30416,6 +30457,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionTagsInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30453,6 +30495,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionTagsInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30545,6 +30588,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionLevelsInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30582,6 +30626,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionLevelsInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30650,6 +30695,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionLevelsInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30687,6 +30733,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionLevelsInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30779,6 +30826,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionAudienceTypesInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30816,6 +30864,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionAudienceTypesInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -30884,6 +30933,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionAudienceTypesInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30921,6 +30971,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionAudienceTypesInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31013,6 +31064,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionIndustriesInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31050,6 +31102,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionIndustriesInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31118,6 +31171,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionIndustriesInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31155,6 +31209,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionIndustriesInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31247,6 +31302,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionDeliveryTypesInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31284,6 +31340,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionDeliveryTypesInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31352,6 +31409,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionDeliveryTypesInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31389,6 +31447,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionDeliveryTypesInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31481,6 +31540,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionViewingOptsInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31518,6 +31578,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionViewingOptsInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31586,6 +31647,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionViewingOptsInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31623,6 +31685,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionViewingOptsInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31871,6 +31934,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutSessionSpeakersInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31908,6 +31972,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutSessionSpeakersInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -31980,6 +32045,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutSessionSpeakersInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32017,6 +32083,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutSessionSpeakersInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32079,6 +32146,7 @@ export namespace Prisma {
 
   export type SessionCreateWithoutVotesInput = {
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -32116,6 +32184,7 @@ export namespace Prisma {
   export type SessionUncheckedCreateWithoutVotesInput = {
     id?: number
     sessionId: string
+    eventSource?: string
     sessionInstanceId?: string | null
     localizedId?: string | null
     sessionCode?: string | null
@@ -32168,6 +32237,7 @@ export namespace Prisma {
 
   export type SessionUpdateWithoutVotesInput = {
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null
@@ -32205,6 +32275,7 @@ export namespace Prisma {
   export type SessionUncheckedUpdateWithoutVotesInput = {
     id?: IntFieldUpdateOperationsInput | number
     sessionId?: StringFieldUpdateOperationsInput | string
+    eventSource?: StringFieldUpdateOperationsInput | string
     sessionInstanceId?: NullableStringFieldUpdateOperationsInput | string | null
     localizedId?: NullableStringFieldUpdateOperationsInput | string | null
     sessionCode?: NullableStringFieldUpdateOperationsInput | string | null

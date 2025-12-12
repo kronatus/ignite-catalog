@@ -15,8 +15,8 @@
   /* Conference Theme Colors */
   --ignite-primary: #0078D4;
   --ignite-secondary: #8764B8;
-  --reinvent-primary: #FF9900;
-  --reinvent-secondary: #E88B00;
+  --reinvent-primary: #D97706;
+  --reinvent-secondary: #B45309;
   --amdocs-primary: #6B46C1;
   --amdocs-secondary: #8B5CF6;
   
@@ -126,7 +126,7 @@ body {
 
 /* AWS Re:Invent Theme - Angular Orange/Red Pattern */
 .ms-background-reinvent {
-  background: linear-gradient(135deg, #FFF8F0 0%, #FFEDE0 100%) !important;
+  background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%) !important;
 }
 
 .ms-background-reinvent::before {
@@ -137,16 +137,16 @@ body {
   right: 0;
   bottom: 0;
   background-image: 
-    /* Sharp angular patterns inspired by AWS branding */
-    linear-gradient(15deg, transparent 20%, rgba(255, 153, 0, 0.08) 25%, transparent 30%),
-    linear-gradient(165deg, transparent 20%, rgba(255, 153, 0, 0.06) 25%, transparent 30%),
-    linear-gradient(-15deg, transparent 50%, rgba(232, 139, 0, 0.07) 55%, transparent 60%),
-    linear-gradient(-165deg, transparent 50%, rgba(232, 139, 0, 0.05) 55%, transparent 60%),
-    linear-gradient(75deg, transparent 70%, rgba(255, 153, 0, 0.04) 75%, transparent 80%),
-    linear-gradient(-75deg, transparent 70%, rgba(232, 139, 0, 0.04) 75%, transparent 80%),
+    /* Sharp angular patterns inspired by AWS branding - darker orange palette */
+    linear-gradient(15deg, transparent 20%, rgba(217, 119, 6, 0.08) 25%, transparent 30%),
+    linear-gradient(165deg, transparent 20%, rgba(217, 119, 6, 0.06) 25%, transparent 30%),
+    linear-gradient(-15deg, transparent 50%, rgba(180, 83, 9, 0.07) 55%, transparent 60%),
+    linear-gradient(-165deg, transparent 50%, rgba(180, 83, 9, 0.05) 55%, transparent 60%),
+    linear-gradient(75deg, transparent 70%, rgba(217, 119, 6, 0.04) 75%, transparent 80%),
+    linear-gradient(-75deg, transparent 70%, rgba(180, 83, 9, 0.04) 75%, transparent 80%),
     /* Geometric grid pattern */
-    repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(255, 153, 0, 0.015) 81px, rgba(255, 153, 0, 0.015) 82px),
-    repeating-linear-gradient(-45deg, transparent, transparent 120px, rgba(232, 139, 0, 0.015) 121px, rgba(232, 139, 0, 0.015) 122px);
+    repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(217, 119, 6, 0.015) 81px, rgba(217, 119, 6, 0.015) 82px),
+    repeating-linear-gradient(-45deg, transparent, transparent 120px, rgba(180, 83, 9, 0.015) 121px, rgba(180, 83, 9, 0.015) 122px);
   background-size: 400% 400%, 400% 400%, 500% 500%, 500% 500%, 300% 300%, 300% 300%, 100% 100%, 100% 100%;
   animation: reinventLines 18s linear infinite;
   transition: opacity 0.8s ease-in-out !important;

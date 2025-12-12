@@ -31,25 +31,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Search in title, description, aiDescription, speakers, companies, tags, and topics
-    // SQLite doesn't support case-insensitive mode, so we use contains
+    // PostgreSQL supports case-insensitive search with mode: 'insensitive'
     if (search) {
       where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { aiDescription: { contains: search } },
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { aiDescription: { contains: search, mode: 'insensitive' } },
         // Search in speakers
         {
           sessionSpeakers: {
             some: {
               speaker: {
                 OR: [
-                  { name: { contains: search } },
-                  { company: { contains: search } },
+                  { name: { contains: search, mode: 'insensitive' } },
+                  { company: { contains: search, mode: 'insensitive' } },
                   {
                     speakerCompanies: {
                       some: {
                         company: {
-                          name: { contains: search },
+                          name: { contains: search, mode: 'insensitive' },
                         },
                       },
                     },
@@ -65,8 +65,8 @@ export async function GET(request: NextRequest) {
             some: {
               tag: {
                 OR: [
-                  { displayValue: { contains: search } },
-                  { logicalValue: { contains: search } },
+                  { displayValue: { contains: search, mode: 'insensitive' } },
+                  { logicalValue: { contains: search, mode: 'insensitive' } },
                 ],
               },
             },
@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
             some: {
               topic: {
                 OR: [
-                  { displayValue: { contains: search } },
-                  { logicalValue: { contains: search } },
+                  { displayValue: { contains: search, mode: 'insensitive' } },
+                  { logicalValue: { contains: search, mode: 'insensitive' } },
                 ],
               },
             },

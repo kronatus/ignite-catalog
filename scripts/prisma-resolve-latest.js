@@ -2,6 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
+// Only run this helper when PRISMA_AUTO_RESOLVE is explicitly enabled.
+// This prevents unexpected migration resolution in normal builds.
+if (process.env.PRISMA_AUTO_RESOLVE !== 'true') {
+  console.log('PRISMA_AUTO_RESOLVE not set to "true"; skipping prisma migrate resolve.');
+  process.exit(0);
+}
+
 try {
   const migrationsDir = path.join(process.cwd(), 'prisma', 'migrations');
   if (!fs.existsSync(migrationsDir)) {

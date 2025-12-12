@@ -13,7 +13,8 @@ datasource db {
 
 model Session {
   id                 Int       @id @default(autoincrement())
-  sessionId          String    @unique
+  sessionId          String // Session ID from source (Ignite or Re:Invent)
+  eventSource        String    @default("Ignite") // "Ignite" or "ReInvent"
   sessionInstanceId  String?
   localizedId        String?
   sessionCode        String?
@@ -49,6 +50,8 @@ model Session {
   sessionViewingOpts   SessionViewingOptionOnSession[]
   sessionSpeakers      SessionSpeaker[]
   votes                Vote[]
+
+  @@unique([eventSource, sessionId])
 }
 
 model Topic {

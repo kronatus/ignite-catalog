@@ -108,13 +108,13 @@ export default function Home() {
       case "ReInvent":
         return {
           name: "AWS Re:Invent",
-          primary: "#FF9900",
-          primaryDark: "#E88B00",
-          primaryLight: "#FFB84D",
-          accent: "#FFF4E5",
-          accentBorder: "#FFD9A6",
-          background: "linear-gradient(135deg, #FF9900 0%, #E88B00 100%)",
-          backgroundHover: "linear-gradient(135deg, #FFB84D 0%, #FF9900 100%)",
+          primary: "#D97706", // Darker, more professional orange
+          primaryDark: "#B45309", // Much darker for contrast
+          primaryLight: "#F59E0B", // Slightly lighter but still muted
+          accent: "#FEF3C7", // Softer yellow-orange accent
+          accentBorder: "#FCD34D", // Muted gold border
+          background: "linear-gradient(135deg, #D97706 0%, #B45309 100%)",
+          backgroundHover: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
         };
       default:
         return {
@@ -452,7 +452,7 @@ export default function Home() {
                   aria-label="Filter by Re:Invent"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="16" height="16" rx="2" fill="#FF9900"/>
+                    <rect width="16" height="16" rx="2" fill="#D97706"/>
                     <path d="M3 11.5L8 5L13 11.5H10.5L8 8.5L5.5 11.5H3Z" fill="white"/>
                     <path d="M4 12H12" stroke="white" strokeWidth="1" strokeLinecap="round"/>
                   </svg>
@@ -514,6 +514,40 @@ export default function Home() {
 
           {facets && (
             <>
+              {facets.sessionTypes && facets.sessionTypes.length > 0 && (
+                <select
+                  value={filters.sessionType}
+                  onChange={(e) => handleFilterChange("sessionType", e.target.value)}
+                  aria-label="Filter by session type"
+                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
+                  style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
+                >
+                  <option value="">All Session Types</option>
+                  {facets.sessionTypes.map((s) => (
+                    <option key={s.id} value={s.logicalValue}>
+                      {s.displayValue}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {facets.levels.length > 0 && (
+                <select
+                  value={filters.level}
+                  onChange={(e) => handleFilterChange("level", e.target.value)}
+                  aria-label="Filter by level"
+                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
+                  style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
+                >
+                  <option value="">All Levels</option>
+                  {facets.levels.map((l) => (
+                    <option key={l.id} value={l.logicalValue}>
+                      {l.displayValue}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               {facets.topics.length > 0 && (
                 <select
                   value={filters.topic}
@@ -572,41 +606,6 @@ export default function Home() {
                       ── Show less tags ──
                     </option>
                   )}
-                </select>
-              )}
-
-
-              {facets.levels.length > 0 && (
-                <select
-                  value={filters.level}
-                  onChange={(e) => handleFilterChange("level", e.target.value)}
-                  aria-label="Filter by level"
-                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
-                  style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
-                >
-                  <option value="">All Levels</option>
-                  {facets.levels.map((l) => (
-                    <option key={l.id} value={l.logicalValue}>
-                      {l.displayValue}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {facets.sessionTypes && facets.sessionTypes.length > 0 && (
-                <select
-                  value={filters.sessionType}
-                  onChange={(e) => handleFilterChange("sessionType", e.target.value)}
-                  aria-label="Filter by session type"
-                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
-                  style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
-                >
-                  <option value="">All Session Types</option>
-                  {facets.sessionTypes.map((s) => (
-                    <option key={s.id} value={s.logicalValue}>
-                      {s.displayValue}
-                    </option>
-                  ))}
                 </select>
               )}
             </>
