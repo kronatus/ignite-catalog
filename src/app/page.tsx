@@ -134,7 +134,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchFacets();
-  }, []);
+  }, [filters.eventSource]); // Re-fetch facets when event source changes
 
   useEffect(() => {
     fetchSessions();
@@ -142,7 +142,10 @@ export default function Home() {
 
   const fetchFacets = async () => {
     try {
-      const res = await fetch("/api/facets");
+      const params = new URLSearchParams();
+      if (filters.eventSource) params.set("eventSource", filters.eventSource);
+      
+      const res = await fetch(`/api/facets?${params}`);
       const data = await res.json();
       setFacets(data);
     } catch (err) {
@@ -296,9 +299,12 @@ export default function Home() {
 
   return (
     <div 
-      className="min-h-screen ms-background-pattern"
+      className={`min-h-screen ms-background-pattern ${
+        filters.eventSource === "Ignite" ? "ms-background-ignite" :
+        filters.eventSource === "ReInvent" ? "ms-background-reinvent" :
+        "ms-background-all"
+      }`}
       style={{
-        backgroundColor: filters.eventSource === "" ? "#F3F2F1" : `${currentTheme.primary}08`, // Very subtle theme tint
         minHeight: "100vh"
       }}
     >
@@ -325,6 +331,11 @@ export default function Home() {
             {facets && (
               <>
                 {facets.recordedCount} recorded sessions • {facets.nonRecordedCount} non-recorded
+                {filters.eventSource && (
+                  <span className="ml-2 opacity-80">
+                    ({currentTheme.name})
+                  </span>
+                )}
               </>
             )}
           </p>
@@ -377,37 +388,38 @@ export default function Home() {
 
         {/* Conference Slider and Recording Filter */}
         <div className="mb-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-8 bg-white rounded-md p-4 border border-[#C8C6C4]" style={{ boxShadow: "var(--ms-shadow-2)" }}>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-8 bg-white rounded-md p-3 sm:p-4 border border-[#C8C6C4]" style={{ boxShadow: "var(--ms-shadow-2)" }}>
             
             {/* Conference Slider */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <span className="text-sm font-semibold" style={{ color: "#323130" }}>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              <span className="text-sm font-semibold flex-shrink-0" style={{ color: "#323130" }}>
                 Conference:
               </span>
-              <div className="flex items-center bg-[#F3F2F1] rounded-lg p-1 border border-[#E1DFDD] overflow-x-auto">
+              <div className="flex items-center bg-[#F3F2F1] rounded-lg p-0.5 border border-[#E1DFDD] overflow-x-auto min-w-0">
                 <button
                   onClick={() => handleFilterChange("eventSource", "Ignite")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
                     filters.eventSource === "Ignite"
                       ? "bg-white shadow-sm border border-[#C8C6C4]"
                       : "text-[#605E5C] hover:text-[#323130]"
                   }`}
                   style={filters.eventSource === "Ignite" ? { color: currentTheme.primary } : {}}
-                  aria-label="Filter by Microsoft Ignite"
+                  aria-label="Filter by Ignite"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="16" height="16" rx="2" fill="#0078D4"/>
-                    <rect x="2" y="2" width="5" height="5" fill="white"/>
-                    <rect x="9" y="2" width="5" height="5" fill="white"/>
-                    <rect x="2" y="9" width="5" height="5" fill="white"/>
-                    <rect x="9" y="9" width="5" height="5" fill="white"/>
+                    <rect width="16" height="16" rx="1" fill="white"/>
+                    {/* Microsoft logo with proper colors */}
+                    <rect x="1" y="1" width="6.5" height="6.5" fill="#F25022"/>
+                    <rect x="8.5" y="1" width="6.5" height="6.5" fill="#7FBA00"/>
+                    <rect x="1" y="8.5" width="6.5" height="6.5" fill="#00A4EF"/>
+                    <rect x="8.5" y="8.5" width="6.5" height="6.5" fill="#FFB900"/>
                   </svg>
-                  <span className="whitespace-nowrap">Microsoft Ignite</span>
+                  <span className="whitespace-nowrap">Ignite</span>
                 </button>
                 
                 <button
                   onClick={() => handleFilterChange("eventSource", "")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
                     filters.eventSource === ""
                       ? "bg-white shadow-sm border border-[#C8C6C4]"
                       : "text-[#605E5C] hover:text-[#323130]"
@@ -426,25 +438,25 @@ export default function Home() {
                       </linearGradient>
                     </defs>
                   </svg>
-                  <span className="whitespace-nowrap">Show All Conf.</span>
+                  <span className="whitespace-nowrap">Show All</span>
                 </button>
                 
                 <button
                   onClick={() => handleFilterChange("eventSource", "ReInvent")}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
                     filters.eventSource === "ReInvent"
                       ? "bg-white shadow-sm border border-[#C8C6C4]"
                       : "text-[#605E5C] hover:text-[#323130]"
                   }`}
                   style={filters.eventSource === "ReInvent" ? { color: currentTheme.primary } : {}}
-                  aria-label="Filter by AWS Re:Invent"
+                  aria-label="Filter by Re:Invent"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect width="16" height="16" rx="2" fill="#FF9900"/>
                     <path d="M3 11.5L8 5L13 11.5H10.5L8 8.5L5.5 11.5H3Z" fill="white"/>
                     <path d="M4 12H12" stroke="white" strokeWidth="1" strokeLinecap="round"/>
                   </svg>
-                  <span className="whitespace-nowrap">AWS Re:Invent</span>
+                  <span className="whitespace-nowrap">Re:Invent</span>
                 </button>
               </div>
             </div>
@@ -522,7 +534,19 @@ export default function Home() {
               {facets.tags.popular.length > 0 && (
                 <select
                   value={filters.tag}
-                  onChange={(e) => handleFilterChange("tag", e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "SHOW_MORE_TAGS") {
+                      setShowAllTags(true);
+                      // Reset to empty value to keep "All Tags" selected
+                      e.target.value = "";
+                    } else if (e.target.value === "SHOW_LESS_TAGS") {
+                      setShowAllTags(false);
+                      // Reset to empty value to keep "All Tags" selected
+                      e.target.value = "";
+                    } else {
+                      handleFilterChange("tag", e.target.value);
+                    }
+                  }}
                   aria-label="Filter by tag"
                   className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
                   style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
@@ -534,7 +558,7 @@ export default function Home() {
                     </option>
                   ))}
                   {!showAllTags && facets.tags.remaining.length > 0 && (
-                    <option value="" disabled style={{ fontStyle: 'italic', color: '#605E5C' }}>
+                    <option value="SHOW_MORE_TAGS" style={{ fontStyle: 'italic', color: currentTheme.primary }}>
                       ── Show {facets.tags.remaining.length} more tags ──
                     </option>
                   )}
@@ -543,22 +567,14 @@ export default function Home() {
                       {t.displayValue}
                     </option>
                   ))}
+                  {showAllTags && facets.tags.remaining.length > 0 && (
+                    <option value="SHOW_LESS_TAGS" style={{ fontStyle: 'italic', color: currentTheme.primary }}>
+                      ── Show less tags ──
+                    </option>
+                  )}
                 </select>
               )}
-              
-              {facets.tags.popular.length > 0 && facets.tags.remaining.length > 0 && (
-                <button
-                  onClick={() => setShowAllTags(!showAllTags)}
-                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md hover:bg-[#F3F2F1] ms-transition font-medium text-sm"
-                  style={{ 
-                    boxShadow: "var(--ms-shadow-2)",
-                    color: currentTheme.primary
-                  }}
-                  aria-label={showAllTags ? "Show fewer tags" : `Show ${facets.tags.remaining.length} more tags`}
-                >
-                  {showAllTags ? "Show less" : `+${facets.tags.remaining.length} more tags`}
-                </button>
-              )}
+
 
               {facets.levels.length > 0 && (
                 <select
