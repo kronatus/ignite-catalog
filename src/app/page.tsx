@@ -42,7 +42,11 @@ type Session = {
 
 type Facets = {
   topics: Array<{ id: number; logicalValue: string; displayValue: string }>;
-  tags: Array<{ id: number; logicalValue: string; displayValue: string }>;
+  tags: {
+    popular: Array<{ id: number; logicalValue: string; displayValue: string; sessionCount: number }>;
+    remaining: Array<{ id: number; logicalValue: string; displayValue: string; sessionCount: number }>;
+    total: number;
+  };
   levels: Array<{ id: number; logicalValue: string; displayValue: string }>;
   audienceTypes: Array<{ id: number; logicalValue: string; displayValue: string }>;
   industries: Array<{ id: number; logicalValue: string; displayValue: string }>;
@@ -85,6 +89,48 @@ export default function Home() {
   });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [showAllTags, setShowAllTags] = useState(false);
+
+  // Theme configuration based on selected conference
+  const getTheme = (eventSource: string) => {
+    switch (eventSource) {
+      case "Ignite":
+        return {
+          name: "Microsoft Ignite",
+          primary: "#0078D4",
+          primaryDark: "#005A9E",
+          primaryLight: "#106EBE",
+          accent: "#DEECF9",
+          accentBorder: "#B3D9F2",
+          background: "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)",
+          backgroundHover: "linear-gradient(135deg, #106EBE 0%, #0078D4 100%)",
+        };
+      case "ReInvent":
+        return {
+          name: "AWS Re:Invent",
+          primary: "#FF9900",
+          primaryDark: "#E88B00",
+          primaryLight: "#FFB84D",
+          accent: "#FFF4E5",
+          accentBorder: "#FFD9A6",
+          background: "linear-gradient(135deg, #FF9900 0%, #E88B00 100%)",
+          backgroundHover: "linear-gradient(135deg, #FFB84D 0%, #FF9900 100%)",
+        };
+      default:
+        return {
+          name: "All Conferences",
+          primary: "#6B46C1", // Amdocs purple
+          primaryDark: "#553C9A",
+          primaryLight: "#8B5CF6",
+          accent: "#F3E8FF",
+          accentBorder: "#C4B5FD",
+          background: "linear-gradient(135deg, #6B46C1 0%, #553C9A 100%)",
+          backgroundHover: "linear-gradient(135deg, #8B5CF6 0%, #6B46C1 100%)",
+        };
+    }
+  };
+
+  const currentTheme = getTheme(filters.eventSource);
 
   useEffect(() => {
     fetchFacets();
@@ -161,6 +207,11 @@ export default function Home() {
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
+    
+    // Reset tag expansion when event source changes (tags will be different)
+    if (key === "eventSource") {
+      setShowAllTags(false);
+    }
   };
 
   const clearFilters = () => {
@@ -178,6 +229,7 @@ export default function Home() {
     });
     setSearch("");
     setPage(1);
+    setShowAllTags(false); // Reset tag expansion
   };
 
   const handleVote = async (sessionId: number, value: 1 | -1) => {
@@ -246,7 +298,7 @@ export default function Home() {
     <div 
       className="min-h-screen ms-background-pattern"
       style={{
-        backgroundColor: "#F3F2F1",
+        backgroundColor: filters.eventSource === "" ? "#F3F2F1" : `${currentTheme.primary}08`, // Very subtle theme tint
         minHeight: "100vh"
       }}
     >
@@ -254,7 +306,7 @@ export default function Home() {
       <header 
         className="sticky top-0 z-10 ms-elevation-8"
         style={{
-          background: "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)",
+          background: currentTheme.background,
           borderBottom: "none",
           padding: "24px 0"
         }}
@@ -266,7 +318,7 @@ export default function Home() {
               <path d="M8 4C6.9 4 6 4.9 6 6V26C6 27.1 6.9 28 8 28H24C25.1 28 26 27.1 26 26V8L20 4H8ZM18 10V6H20L24 10V26H8V6H18V10Z" fill="white"/>
             </svg>
             <h1 className="text-3xl font-semibold text-white" style={{ letterSpacing: "-0.02em" }}>
-              Ignite & Re:Invent 2025 Sessions Explorer
+              {filters.eventSource ? `${currentTheme.name} 2025 Sessions` : "Ignite & Re:Invent 2025 Sessions Explorer"}
             </h1>
           </div>
           <p className="text-sm mt-1 ml-11" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
@@ -291,8 +343,20 @@ export default function Home() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full px-4 py-3 pl-12 text-base bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
-              style={{ boxShadow: "var(--ms-shadow-2)" }}
+              className="w-full px-4 py-3 pl-12 text-base bg-white border border-[#C8C6C4] rounded-md focus:ring-2 outline-none ms-transition"
+              style={{ 
+                boxShadow: "var(--ms-shadow-2)",
+                "--tw-ring-color": currentTheme.primary,
+                borderColor: "#C8C6C4"
+              } as any}
+              onFocus={(e) => {
+                e.target.style.borderColor = currentTheme.primary;
+                e.target.style.boxShadow = `0 0 0 2px ${currentTheme.primary}33`;
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "#C8C6C4";
+                e.target.style.boxShadow = "var(--ms-shadow-2)";
+              }}
             />
             <svg
               className="absolute left-4 top-3.5 h-5 w-5"
@@ -311,59 +375,128 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Recording Filter Radio Buttons */}
+        {/* Conference Slider and Recording Filter */}
         <div className="mb-6">
-          <div className="flex items-center gap-6 bg-white rounded-md p-4 border border-[#C8C6C4]" style={{ boxShadow: "var(--ms-shadow-2)" }}>
-            <span className="text-sm font-semibold" style={{ color: "#323130" }}>
-              Show:
-            </span>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="recordingFilter"
-                value=""
-                checked={filters.hasOnDemand === ""}
-                onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
-                className="w-4 h-4 text-[#0078D4] border-[#C8C6C4] focus:ring-[#0078D4] focus:ring-2"
-              />
-              <span className="text-sm font-medium" style={{ color: "#323130" }}>
-                All Sessions
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 lg:gap-8 bg-white rounded-md p-4 border border-[#C8C6C4]" style={{ boxShadow: "var(--ms-shadow-2)" }}>
+            
+            {/* Conference Slider */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <span className="text-sm font-semibold" style={{ color: "#323130" }}>
+                Conference:
               </span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="recordingFilter"
-                value="true"
-                checked={filters.hasOnDemand === "true"}
-                onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
-                className="w-4 h-4 text-[#0078D4] border-[#C8C6C4] focus:ring-[#0078D4] focus:ring-2"
-              />
-              <span className="text-sm font-medium" style={{ color: "#323130" }}>
-                Recorded Only
+              <div className="flex items-center bg-[#F3F2F1] rounded-lg p-1 border border-[#E1DFDD] overflow-x-auto">
+                <button
+                  onClick={() => handleFilterChange("eventSource", "Ignite")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                    filters.eventSource === "Ignite"
+                      ? "bg-white shadow-sm border border-[#C8C6C4]"
+                      : "text-[#605E5C] hover:text-[#323130]"
+                  }`}
+                  style={filters.eventSource === "Ignite" ? { color: currentTheme.primary } : {}}
+                  aria-label="Filter by Microsoft Ignite"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="16" height="16" rx="2" fill="#0078D4"/>
+                    <rect x="2" y="2" width="5" height="5" fill="white"/>
+                    <rect x="9" y="2" width="5" height="5" fill="white"/>
+                    <rect x="2" y="9" width="5" height="5" fill="white"/>
+                    <rect x="9" y="9" width="5" height="5" fill="white"/>
+                  </svg>
+                  <span className="whitespace-nowrap">Microsoft Ignite</span>
+                </button>
+                
+                <button
+                  onClick={() => handleFilterChange("eventSource", "")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                    filters.eventSource === ""
+                      ? "bg-white shadow-sm border border-[#C8C6C4]"
+                      : "text-[#605E5C] hover:text-[#323130]"
+                  }`}
+                  style={filters.eventSource === "" ? { color: currentTheme.primary } : {}}
+                  aria-label="Show all conferences"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="16" height="16" rx="2" fill="url(#allConfGradient)"/>
+                    <circle cx="8" cy="8" r="5" fill="white" fillOpacity="0.9"/>
+                    <circle cx="8" cy="8" r="2" fill="url(#allConfGradient)"/>
+                    <defs>
+                      <linearGradient id="allConfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#0078D4"/>
+                        <stop offset="100%" stopColor="#FF9900"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <span className="whitespace-nowrap">Show All Conf.</span>
+                </button>
+                
+                <button
+                  onClick={() => handleFilterChange("eventSource", "ReInvent")}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                    filters.eventSource === "ReInvent"
+                      ? "bg-white shadow-sm border border-[#C8C6C4]"
+                      : "text-[#605E5C] hover:text-[#323130]"
+                  }`}
+                  style={filters.eventSource === "ReInvent" ? { color: currentTheme.primary } : {}}
+                  aria-label="Filter by AWS Re:Invent"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="16" height="16" rx="2" fill="#FF9900"/>
+                    <path d="M3 11.5L8 5L13 11.5H10.5L8 8.5L5.5 11.5H3Z" fill="white"/>
+                    <path d="M4 12H12" stroke="white" strokeWidth="1" strokeLinecap="round"/>
+                  </svg>
+                  <span className="whitespace-nowrap">AWS Re:Invent</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Recording Filter */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+              <span className="text-sm font-semibold" style={{ color: "#323130" }}>
+                Show:
               </span>
-            </label>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="recordingFilter"
+                    value=""
+                    checked={filters.hasOnDemand === ""}
+                    onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
+                    className="w-4 h-4 border-[#C8C6C4] focus:ring-2"
+                    style={{ 
+                      color: currentTheme.primary,
+                      "--tw-ring-color": currentTheme.primary
+                    } as any}
+                  />
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#323130" }}>
+                    All Sessions
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="recordingFilter"
+                    value="true"
+                    checked={filters.hasOnDemand === "true"}
+                    onChange={(e) => handleFilterChange("hasOnDemand", e.target.value)}
+                    className="w-4 h-4 border-[#C8C6C4] focus:ring-2"
+                    style={{ 
+                      color: currentTheme.primary,
+                      "--tw-ring-color": currentTheme.primary
+                    } as any}
+                  />
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ color: "#323130" }}>
+                    Recorded Only
+                  </span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Filters */}
         <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {facets && facets.eventSources && facets.eventSources.length > 1 && (
-            <select
-              value={filters.eventSource}
-              onChange={(e) => handleFilterChange("eventSource", e.target.value)}
-              aria-label="Filter by event source"
-              className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md focus:ring-2 focus:ring-[#0078D4] focus:border-[#0078D4] outline-none ms-transition"
-              style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
-            >
-              <option value="">All Conferences</option>
-              {facets.eventSources.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
-            </select>
-          )}
+
 
 
 
@@ -386,7 +519,7 @@ export default function Home() {
                 </select>
               )}
 
-              {facets.tags.length > 0 && (
+              {facets.tags.popular.length > 0 && (
                 <select
                   value={filters.tag}
                   onChange={(e) => handleFilterChange("tag", e.target.value)}
@@ -395,12 +528,36 @@ export default function Home() {
                   style={{ boxShadow: "var(--ms-shadow-2)", color: "#323130" }}
                 >
                   <option value="">All Tags</option>
-                  {facets.tags.map((t) => (
+                  {facets.tags.popular.map((t) => (
+                    <option key={t.id} value={t.logicalValue}>
+                      {t.displayValue}
+                    </option>
+                  ))}
+                  {!showAllTags && facets.tags.remaining.length > 0 && (
+                    <option value="" disabled style={{ fontStyle: 'italic', color: '#605E5C' }}>
+                      ── Show {facets.tags.remaining.length} more tags ──
+                    </option>
+                  )}
+                  {showAllTags && facets.tags.remaining.map((t) => (
                     <option key={t.id} value={t.logicalValue}>
                       {t.displayValue}
                     </option>
                   ))}
                 </select>
+              )}
+              
+              {facets.tags.popular.length > 0 && facets.tags.remaining.length > 0 && (
+                <button
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className="px-4 py-2 bg-white border border-[#C8C6C4] rounded-md hover:bg-[#F3F2F1] ms-transition font-medium text-sm"
+                  style={{ 
+                    boxShadow: "var(--ms-shadow-2)",
+                    color: currentTheme.primary
+                  }}
+                  aria-label={showAllTags ? "Show fewer tags" : `Show ${facets.tags.remaining.length} more tags`}
+                >
+                  {showAllTags ? "Show less" : `+${facets.tags.remaining.length} more tags`}
+                </button>
               )}
 
               {facets.levels.length > 0 && (
@@ -506,9 +663,9 @@ export default function Home() {
                           <span 
                             className="px-3 py-1 text-xs font-semibold rounded-md"
                             style={{ 
-                              backgroundColor: "#E8F5E9", 
-                              color: "#107C10",
-                              border: "1px solid #B3E5B3"
+                              backgroundColor: currentTheme.accent, 
+                              color: currentTheme.primary,
+                              border: `1px solid ${currentTheme.accentBorder}`
                             }}
                           >
                             RECORDED
@@ -553,9 +710,9 @@ export default function Home() {
                           <span 
                             className="px-3 py-1 text-xs font-semibold rounded-md"
                             style={{ 
-                              backgroundColor: "#DEECF9", 
-                              color: "#0078D4",
-                              border: "1px solid #B3D9F2"
+                              backgroundColor: currentTheme.accent, 
+                              color: currentTheme.primary,
+                              border: `1px solid ${currentTheme.accentBorder}`
                             }}
                           >
                             {session.sessionTypeDisplay}
@@ -649,14 +806,14 @@ export default function Home() {
                           rel="noopener noreferrer"
                           className="px-6 py-2.5 text-white rounded-md font-semibold ms-transition inline-block ms-elevation-4"
                           style={{
-                            background: "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)",
+                            background: currentTheme.background,
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "linear-gradient(135deg, #106EBE 0%, #0078D4 100%)";
+                            e.currentTarget.style.background = currentTheme.backgroundHover;
                             e.currentTarget.style.boxShadow = "var(--ms-shadow-8)";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "linear-gradient(135deg, #0078D4 0%, #005A9E 100%)";
+                            e.currentTarget.style.background = currentTheme.background;
                             e.currentTarget.style.boxShadow = "var(--ms-shadow-4)";
                           }}
                         >

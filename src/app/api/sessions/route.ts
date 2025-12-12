@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { categorizeTopic } from "@/lib/topicCategorization";
 import { categorizeSessionType } from "@/lib/sessionTypeCategorization";
+import { categorizeLevel } from "@/lib/levelCategorization";
 
 export async function GET(request: NextRequest) {
   try {
@@ -216,15 +217,46 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Filter by level
+    // Filter by level (handles both individual levels and categorized levels)
     if (level) {
-      where.sessionLevels = {
-        some: {
-          level: {
-            logicalValue: level,
-          },
+      // Get all levels to find which ones match the category
+      const allLevels = await prisma.level.findMany({
+        select: {
+          logicalValue: true,
+          displayValue: true,
         },
-      };
+      });
+
+      // Find all level values that belong to this category
+      const matchingLevels = new Set<string>();
+      for (const levelRecord of allLevels) {
+        const category = categorizeLevel(levelRecord.logicalValue, levelRecord.displayValue);
+        if (category.logicalValue === level) {
+          matchingLevels.add(levelRecord.logicalValue);
+        }
+      }
+
+      if (matchingLevels.size > 0) {
+        // It's a category - filter by all levels in that category
+        where.sessionLevels = {
+          some: {
+            level: {
+              logicalValue: {
+                in: Array.from(matchingLevels),
+              },
+            },
+          },
+        };
+      } else {
+        // It's an individual level - filter by that level
+        where.sessionLevels = {
+          some: {
+            level: {
+              logicalValue: level,
+            },
+          },
+        };
+      }
     }
 
     // Filter by audience type

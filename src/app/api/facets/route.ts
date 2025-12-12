@@ -10,6 +10,11 @@ import {
   getAllSessionTypeCategories,
   type SessionTypeCategory,
 } from "@/lib/sessionTypeCategorization";
+import {
+  categorizeLevel,
+  getAllLevelCategories,
+  type LevelCategory,
+} from "@/lib/levelCategorization";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     const where = eventSource ? { eventSource } : {};
 
-    const [allTopics, tags, levels, audienceTypes, industries, deliveryTypes] =
+    const [allTopics, allTags, allLevels, audienceTypes, industries, deliveryTypes] =
       await Promise.all([
         prisma.topic.findMany({ orderBy: { displayValue: "asc" } }),
         prisma.tag.findMany({ orderBy: { displayValue: "asc" } }),
@@ -175,9 +180,101 @@ export async function GET(request: NextRequest) {
       .filter((cat) => cat.count > 0) // Only include categories with sessions
       .sort((a, b) => b.count - a.count); // Sort by count descending
 
+    // Categorize levels and build a map of category -> level logical values
+    const categoryToLevels = new Map<string, Set<string>>();
+    for (const level of allLevels) {
+      const category = categorizeLevel(level.logicalValue, level.displayValue);
+      if (!categoryToLevels.has(category.logicalValue)) {
+        categoryToLevels.set(category.logicalValue, new Set());
+      }
+      categoryToLevels.get(category.logicalValue)!.add(level.logicalValue);
+    }
+
+    // Get session counts for each level category
+    const levelCategoryCounts = new Map<string, number>();
+    const allLevelCategories = getAllLevelCategories();
+
+    for (const category of allLevelCategories) {
+      const levelLogicalValues = Array.from(categoryToLevels.get(category.logicalValue) || []);
+      
+      if (levelLogicalValues.length === 0) {
+        levelCategoryCounts.set(category.logicalValue, 0);
+        continue;
+      }
+
+      // Count unique sessions that have at least one level in this category
+      const count = await prisma.session.count({
+        where: {
+          ...where,
+          sessionLevels: {
+            some: {
+              level: {
+                logicalValue: {
+                  in: levelLogicalValues,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      levelCategoryCounts.set(category.logicalValue, count);
+    }
+
+    // Build categorized levels array with counts, only including categories with sessions
+    const levels = allLevelCategories
+      .map((category) => ({
+        id: hashString(category.logicalValue),
+        logicalValue: category.logicalValue,
+        displayValue: category.displayValue,
+        count: levelCategoryCounts.get(category.logicalValue) || 0,
+      }))
+      .filter((cat) => cat.count > 0) // Only include categories with sessions
+      .sort((a, b) => {
+        // Sort by the numeric part of the level (100, 200, 300, 400)
+        const aNum = parseInt(a.logicalValue.split('-')[1] || '0');
+        const bNum = parseInt(b.logicalValue.split('-')[1] || '0');
+        return aNum - bNum;
+      });
+
+    // Get all tag usage counts
+    const allTagUsage = await prisma.sessionTag.groupBy({
+      by: ['tagId'],
+      where: where.eventSource ? {
+        session: { eventSource: where.eventSource }
+      } : {},
+      _count: true,
+      orderBy: { _count: { tagId: 'desc' } },
+    });
+
+    // Get all tag details
+    const allTagsFromDb = await prisma.tag.findMany({
+      orderBy: { displayValue: 'asc' }
+    });
+
+    // Add usage count to all tags and filter out unused ones
+    const allTagsWithCounts = allTagsFromDb
+      .map(tag => {
+        const usage = allTagUsage.find(u => u.tagId === tag.id);
+        return {
+          ...tag,
+          sessionCount: usage?._count || 0
+        };
+      })
+      .filter(tag => tag.sessionCount > 0) // Only include tags that are actually used
+      .sort((a, b) => b.sessionCount - a.sessionCount); // Sort by usage
+
+    // Split into popular (top 12) and remaining tags
+    const popularTags = allTagsWithCounts.slice(0, 12);
+    const remainingTags = allTagsWithCounts.slice(12);
+
     return NextResponse.json({
       topics: categorizedTopics,
-      tags,
+      tags: {
+        popular: popularTags,
+        remaining: remainingTags,
+        total: allTagsWithCounts.length
+      },
       levels,
       audienceTypes,
       industries,
